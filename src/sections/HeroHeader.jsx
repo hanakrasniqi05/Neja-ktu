@@ -1,8 +1,6 @@
 const HeroHeader = () => {
   return (
-    <div>
-      Hero Header
-    </div>
+    <div>Hero header</div>
   );
 };
 
