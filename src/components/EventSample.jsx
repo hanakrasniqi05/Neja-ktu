@@ -1,4 +1,3 @@
-// EventSample.jsx
 import React from "react";
 
 const EventSample = () => {
