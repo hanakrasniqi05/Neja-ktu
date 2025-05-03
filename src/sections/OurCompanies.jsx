@@ -44,7 +44,7 @@ export default function OurCompanySection() {
       </div>
 
         <Link to="/signup" className="mt-16 flex justify-center items-center space-x-2 text-lg font-medium text-blue-600 cursor-pointer hover:underline">
-            <span>Je kompani dhe dëshiron t’i postosh dhe t’i evenetet?</span>
+            <span>Je kompani dhe dëshiron t’i postosh dhe ti evenetet?</span>
             <ArrowRight />
         </Link>
     </section>
