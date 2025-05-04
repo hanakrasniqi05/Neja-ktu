@@ -1,8 +1,10 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+
 const userRoutes = require('./routes/userRoutes');
 const eventRoutes = require ('./routes/eventRoutes');
+const commentRoutes = require('./routes/commentRoutes'); 
 const pool = require('./database');
 
 const app = express();
@@ -26,13 +28,16 @@ app.get('/', (req, res) => {
     success: true,
     message: 'Welcome to the API',
     endpoints: {
-      users: '/api/users'
+      users: '/api/users',
+      events: '/api/events',
+      comments: '/api/comments' 
     }
   });
 });
 
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/comments', commentRoutes); 
 
 app.use((req, res) => {
   res.status(404).json({
