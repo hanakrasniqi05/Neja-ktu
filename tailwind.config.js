@@ -19,6 +19,8 @@ module.exports = {
       },
       animation: {
         gradient: 'gradient 8s linear infinite',
+        bounce: 'bounce 1s infinite',
+        'fade-up': 'fadeUp 0.5s ease-out forwards',
       },
     },
   },
