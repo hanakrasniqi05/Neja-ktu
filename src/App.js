@@ -4,6 +4,7 @@ import EventsPage from './pages/EventsPage';
 import ScrollToTop from './ScrollToTop';
 import SignUp from './pages/SignUp'; 
 import LogIn from './pages/LogIn';
+import AboutUs from './pages/AboutUs';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/events" element={<EventsPage  />} />
+        <Route path="/about-us" element={<AboutUs  />} />
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/login" element={<LogIn />} />   
       </Routes>
