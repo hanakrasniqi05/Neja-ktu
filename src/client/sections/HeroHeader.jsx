@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import GradientText from '../GradientText'; 
+import GradientText from '../../GradientText.jsx';
 
 const HeroHeader = () => {
   const navigate = useNavigate();

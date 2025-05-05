@@ -1,6 +1,6 @@
 import Header from '../components/Header.jsx';
 import Footer from '../components/Footer.jsx';
-import EventSample from '../components/EventSample';
+import EventSample from '../components/EventSample.jsx';
 
 const EventsPage = () => {
   return (
