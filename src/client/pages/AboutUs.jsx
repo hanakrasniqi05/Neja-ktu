@@ -2,8 +2,10 @@ import React from 'react';
 import Header from '../components/Header.jsx';
 import Footer from '../components/Footer.jsx';
 
-import HeroSection from '../components/about/HeroSection';
-import ValueProposition from '../components/about/ValueProposition';
+import HeroSection from '../sections/HeroSection.jsx';
+import ValueProposition from '../sections/ValueProposition.jsx';
+import USPShowcase from '../sections/USPShowcase.jsx';
+import CTASection from '../sections/CTASection.jsx';
 
 const AboutUs = () => {
   return (
@@ -11,6 +13,8 @@ const AboutUs = () => {
       <Header/>
       <HeroSection/>
       <ValueProposition/>
+      <USPShowcase/>
+      <CTASection/>
       <Footer/>
     </div>
   );

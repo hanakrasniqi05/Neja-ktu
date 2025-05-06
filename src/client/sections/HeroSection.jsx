@@ -9,9 +9,12 @@ export const HeroSection = () => {
           transition={{ duration: 0.8 }}  
           className="text-center text-white max-w-4xl"
         >
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+           <h1 className="text-4xl md:text-6xl font-bold mb-6">
             Bashkohu me ngjarjet më të mira në Kosovë!
           </h1>
+          <p className="text-xl md:text-2xl mb-10">
+            Platforma jonë lidh rinine me pasionet e tyre - Bashkangjitu me nje klikim!
+          </p>
         </motion.div>
       </section>
     );
