@@ -5,6 +5,7 @@ const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
 const eventRoutes = require ('./routes/eventRoutes');
 const commentRoutes = require('./routes/commentRoutes'); 
+const eventCategoryRoutes = require('./routes/eventCategoryRoutes');
 const pool = require('./database');
 
 const app = express();
@@ -30,7 +31,8 @@ app.get('/', (req, res) => {
     endpoints: {
       users: '/api/users',
       events: '/api/events',
-      comments: '/api/comments' 
+      comments: '/api/comments',
+      eventCategories: '/api/eventCategories'
     }
   });
 });
@@ -38,6 +40,7 @@ app.get('/', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/comments', commentRoutes); 
+app.use('/api/eventCategories', eventCategoryRoutes)
 
 app.use((req, res) => {
   res.status(404).json({
