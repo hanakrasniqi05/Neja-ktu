@@ -20,6 +20,8 @@ module.exports = {
       animation: {
         gradient: 'gradient 8s linear infinite',
         bounce: 'bounce 1s infinite',
+        fadeIn: 'fadeIn 1s ease-in-out',
+        float: 'float 6s ease-in-out infinite',
         'fade-up': 'fadeUp 0.5s ease-out forwards',
       },
     },
