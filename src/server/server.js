@@ -40,7 +40,7 @@ app.get('/', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/comments', commentRoutes); 
-app.use('/api/eventCategories', eventCategoryRoutes)
+app.use('/api/event-categories', eventCategoryRoutes);
 
 app.use((req, res) => {
   res.status(404).json({

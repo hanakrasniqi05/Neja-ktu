@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -29,7 +29,7 @@ api.interceptors.response.use(
   }
 );
 
-const authAPI = {
+export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/auth/register', userData),
   logout: () => api.post('/auth/logout'),
@@ -37,7 +37,7 @@ const authAPI = {
   getMe: () => api.get('/auth/me'),
 };
 
-const userAPI = {
+export const userAPI = {
   getAll: () => api.get('/users'),
   getById: (id) => api.get(`/users/${id}`),
   update: (id, data) => api.put(`/users/${id}`, data),
@@ -45,7 +45,7 @@ const userAPI = {
   updateRole: (id, role) => api.patch(`/users/${id}/role`, { role }),
 };
 
-const commentAPI = {
+export const commentAPI = {
   create: (data) => api.post('/comments', data),
   getAll: () => api.get('/comments'),
   getById: (id) => api.get(`/comments/${id}`),
@@ -55,7 +55,7 @@ const commentAPI = {
   getByUser: (userId) => api.get(`/comments/user/${userId}`),
 };
 
-const eventAPI = {
+export const eventAPI = {
   create: (data) => api.post('/events', data),
   getAll: () => api.get('/events'),
   getById: (id) => api.get(`/events/${id}`),
@@ -66,10 +66,15 @@ const eventAPI = {
   unregister: (eventId) => api.post(`/events/${eventId}/unregister`),
 };
 
-module.exports = {
-  api,
-  authAPI,
-  userAPI,
-  commentAPI,
-  eventAPI
+export const eventCategoryAPI = {
+  getAllCategories: () => api.get('/event-categories/categories'),
+  getEventsByCategory: (categoryId) => api.get(`/event-categories/events?category=${categoryId}`),
+  getAllEvents: () => api.get('/event-categories/events'),
+  addCategoryToEvent: (eventId, categoryId) => api.post(`/events/${eventId}/categories`, { categoryId }),
+  removeCategoryFromEvent: (eventId, categoryId) => api.delete(`/events/${eventId}/categories/${categoryId}`),
+  createCategory: (name) => api.post('/event-categories/categories', { name }),
+  updateCategory: (id, name) => api.put(`/event-categories/categories/${id}`, { name }),
+  deleteCategory: (id) => api.delete(`/event-categories/categories/${id}`),
 };
+
+export default api;
