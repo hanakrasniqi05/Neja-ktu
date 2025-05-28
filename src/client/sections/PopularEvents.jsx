@@ -3,14 +3,19 @@ import axios from 'axios';
 import EventCard from '../components/EventCard'; 
 
 const PopularEvents = () => {
-  const [events, setEvents] = useState([]);
+  const [popularEvents, setPopularEvents] = useState([]);
+  const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPopularEvents = async () => {
+    const fetchEvents = async () => {
       try {
-        const response = await axios.get('/api/events/popular');
-        setEvents(response.data);
+        const [popularRes, allRes] = await Promise.all([
+          axios.get('/api/events/popular'),
+          axios.get('/api/events') 
+        ]);
+        setPopularEvents(popularRes.data);
+        setAllEvents(allRes.data);
       } catch (error) {
         console.error('Error fetching events:', error);
       } finally {
@@ -18,16 +23,20 @@ const PopularEvents = () => {
       }
     };
 
-    fetchPopularEvents();
+    fetchEvents();
   }, []);
-  if (loading) return <div className="text-center py-4">Loading popular events...</div>;
 
+  if (loading) return <div className="text-center py-4">Loading popular events...</div>;
+ 
+  const displayEvents = popularEvents.length > 0 ? popularEvents : allEvents;
+  const isPopular = popularEvents.length > 0;
+  
   return (
     <div className="p-4">
-      <h2 className="text-4xl font-bold mb-10 text-center w-full text-black">Popular Now</h2>
+      <h2 className="text-4xl font-bold mb-10 text-center w-full text-black">{isPopular ? 'Popular Now' : 'All Events'}</h2>
         <div className="overflow-x-auto pb-4">
           <div className="flex flex-nowrap gap-4 w-max">
-          {events.map(event => (
+          {displayEvents.map(event => (
             <EventCard key={event.EventID} event={event} />
           ))}
           </div>

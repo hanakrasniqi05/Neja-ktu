@@ -44,6 +44,7 @@ const eventController = {
         LEFT JOIN user u ON e.CompanyID = u.UserId
         WHERE e.EndDateTime > NOW()
         GROUP BY e.EventID
+        HAVING popularity >= 5
         ORDER BY popularity DESC
         LIMIT 6
       `);
