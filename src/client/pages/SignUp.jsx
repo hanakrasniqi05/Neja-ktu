@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import logo from "../assets/logo-pin-b.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function SignUp() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -20,15 +23,44 @@ export default function SignUp() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
+
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    if (!formData.agreedToTerms) {
+      alert("You must agree to the Terms");
+      return;
+    }
+
+    const [firstName, ...rest] = formData.fullName.trim().split(" ");
+    const lastName = rest.join(" ") || "";
+
+    console.log("Sending signup data:", {firstName, lastName, email: formData.email, password: formData.password, role: "user"});
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/auth/signup", {
+        firstName,
+        lastName,
+        email: formData.email,
+        password: formData.password,
+        role: "user",
+      });
+
+      localStorage.setItem("token", res.data.data.token);
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Signup error:", error.response?.data || error.message);
+      alert(error.response?.data?.message || "Registration failed");
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#E0F2FE] p-4">
       <div className="grid grid-cols-1 md:grid-cols-2 bg-gradient-to-br from-[#E0F2FE] via-[#BAE6FD] to-[#93C5FD] rounded-2xl overflow-hidden shadow-2xl max-w-6xl w-full">
-        
         <div className="p-10 bg-white/50 backdrop-blur-md">
           <h2 className="text-[#1E3A8A] text-3xl font-bold mb-8">Sign Up</h2>
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -104,19 +136,15 @@ export default function SignUp() {
             Sign Up with Google
           </button>
           <p className="mt-6 text-center text-blue-800 text-sm">
-                Already a member?{" "}
+            Already a member?{" "}
             <Link to="/login" className="underline text-[#2563EB]">
-                Login
+              Login
             </Link>
-        </p>
+          </p>
         </div>
 
         <div className="hidden md:flex items-center justify-center bg-gradient-to-br from-[#E0F2FE] via-[#BAE6FD] to-[#93C5FD]">
-        <img
-            src={logo}
-            alt="Logo"
-            className="w-3/4 h-auto"
-        />
+          <img src={logo} alt="Logo" className="w-3/4 h-auto" />
         </div>
       </div>
     </div>
