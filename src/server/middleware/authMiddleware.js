@@ -1,6 +1,8 @@
-const jwt = require('jsonwebtoken'); 
+const jwt = require('jsonwebtoken');
 const pool = require('../database.js');
+const bcrypt = require('bcryptjs');
 
+// Authentication middleware
 const protect = async (req, res, next) => {
   let token;
 
@@ -39,54 +41,46 @@ const protect = async (req, res, next) => {
   }
 };
 
-const authorize = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: `User role ${req.user.role} is not authorized to access this route`
-      });
-    }
-    next();
-  };
-};
-
+// Role hierarchy definition
 const roleHierarchy = {
   admin: ['admin', 'company', 'user'],
   company: ['company', 'user'],
   user: ['user']
 };
 
+// Role checking middleware
 const requireRole = (requiredRole) => {
   return (req, res, next) => {
     const userRole = req.user.role;
-
+    
     if (!roleHierarchy[userRole]?.includes(requiredRole)) {
       return res.status(403).json({
         success: false,
         message: `Access denied. Requires ${requiredRole} role.`
       });
     }
-
+    
     next();
   };
 };
 
+// Any role from list middleware
 const requireAnyRole = (...allowedRoles) => {
   return (req, res, next) => {
     const userRole = req.user.role;
-
+    
     if (!allowedRoles.includes(userRole)) {
       return res.status(403).json({
         success: false,
         message: `Access denied. Requires one of: ${allowedRoles.join(', ')}`
       });
     }
-
+    
     next();
   };
 };
 
+// Admin-only middleware
 const adminOnly = (req, res, next) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({
@@ -99,7 +93,6 @@ const adminOnly = (req, res, next) => {
 
 module.exports = {
   protect,
-  authorize,
   requireRole,
   requireAnyRole,
   adminOnly

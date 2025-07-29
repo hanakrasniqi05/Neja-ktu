@@ -114,7 +114,7 @@ export default function SignUp() {
               <a href="#" className="underline mx-1 text-[#2563EB]">
                 Terms of Service
               </a>
-              and
+              and 
               <a href="#" className="underline text-[#2563EB]">
                 Privacy Policy
               </a>
@@ -127,14 +127,26 @@ export default function SignUp() {
             </button>
           </form>
           <div className="my-6 text-center text-blue-800 text-sm">Or</div>
-          <button className="w-full flex items-center justify-center gap-2 border border-blue-200 py-2 rounded-full text-blue-800 hover:bg-[#93C5FD] hover:text-blue-900 transition">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
-              alt="Google"
-              className="h-5 w-5"
-            />
-            Sign Up with Google
-          </button>
+          <Link to="/company-signup">
+  <button className="w-full flex items-center justify-center gap-2 border border-blue-200 py-2 rounded-full text-blue-800 hover:bg-[#93C5FD] hover:text-blue-900 transition">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M4 6h16M4 10h16M4 14h16M4 18h16"
+      />
+    </svg>
+    Sign Up as a Company
+  </button>
+</Link>
+
           <p className="mt-6 text-center text-blue-800 text-sm">
             Already a member?{" "}
             <Link to="/login" className="underline text-[#2563EB]">

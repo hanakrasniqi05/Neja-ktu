@@ -6,6 +6,7 @@ const userRoutes = require('./routes/userRoutes');
 const eventRoutes = require ('./routes/eventRoutes');
 const commentRoutes = require('./routes/commentRoutes'); 
 const eventCategoryRoutes = require('./routes/eventCategoryRoutes');
+const companyRoutes = require('./routes/companyRoutes');
 const pool = require('./database');
 
 const app = express();
@@ -41,7 +42,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/comments', commentRoutes); 
 app.use('/api/event-categories', eventCategoryRoutes);
-
+app.use('/api/companies', companyRoutes);
 app.use((req, res) => {
   res.status(404).json({
     success: false,

@@ -45,6 +45,12 @@ export const userAPI = {
   updateRole: (id, role) => api.patch(`/users/${id}/role`, { role }),
 };
 
+export const companyAPI = {
+  registerCompany: (formData) => api.post('/companies/signup', formData),
+  getPendingCompanies: () => api.get('/companies/pending'),
+  verifyCompany: (id) => api.patch(`/companies/verify/${id}`),
+};
+
 export const commentAPI = {
   create: (data) => api.post('/comments', data),
   getAll: () => api.get('/comments'),
