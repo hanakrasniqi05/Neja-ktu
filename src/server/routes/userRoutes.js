@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../database.js');
-const userController = require('../controllers/userController');
-
 // Import middleware funksionet me CommonJS
 const {
   protect,
@@ -24,7 +22,7 @@ router.post('/register', register);
 router.post('/login', login);
 
 // Apply JWT token protection for all routes below
-router.use(userController.protect);
+router.use(protect);
 
 // Protected route për përdoruesin aktual
 router.get('/me', getMe);
@@ -34,10 +32,10 @@ router.get('/admin/dashboard', adminOnly, (req, res) => {
   res.json({ success: true, message: 'Welcome to admin dashboard', user: req.user });
 });
 
-router.get('/admin/users', adminOnly, getAllUsers, async (req, res) => {
+router.get('/admin/users', adminOnly, async (req, res) => {
   try {
     const [users] = await require('../database').query(
-      'SELECT id, firstName, lastName, email, role FROM user'
+       'SELECT UserId as id, FirstName as firstName, LastName as lastName, Email as email, Role as role FROM user'
     );
     res.json({ success: true, users });
   } catch (err) {
@@ -56,5 +54,4 @@ router.get('/user/dashboard', requireRole('user'), (req, res) => {
   res.json({ success: true, message: 'Welcome to user dashboard', user: req.user });
 });
 
-// Eksporto router-in me CommonJS
 module.exports = router;

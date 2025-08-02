@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getCategories, getEvents } = require('../controllers/eventCategoryController');
 
-router.get('/categories', eventCategoryController.getCategories); 
-router.get('/events', eventCategoryController.getEvents);
+router.get('/categories', getCategories); 
+router.get('/events', getEvents);
 
 module.exports = router;
