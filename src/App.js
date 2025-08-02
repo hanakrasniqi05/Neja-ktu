@@ -8,6 +8,7 @@ import AboutUs from './client/pages/AboutUs';
 import PrivateRoute from './client/components/PrivateRoute';
 import Unauthorized from './client/pages/Unauthorized';
 import TestPage from './client/pages/TestPage';
+import CompanySignUp from "./client/pages/CompanySignupPage";
 
 function App() {
   return (
@@ -20,7 +21,7 @@ function App() {
         <Route path="/login" element={<LogIn />} />
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
-
+          <Route path="/company-signup" element={<CompanySignUp />} />
         <Route
           path="/test-admin"
           element={
