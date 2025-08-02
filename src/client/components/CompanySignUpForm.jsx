@@ -1,52 +1,70 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from 'axios';
 import logo from "../assets/logo-pin-b.png";
 
-export default function CompanySignupForm() {
+function CompanySignupForm() {
   const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    companyName: "",
-    businessCode: "",
-    description: "",
-    agreedToTerms: false,
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    companyName: '',
+    businessRegistrationNumber: '',
+    description: ''
   });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.firstName) newErrors.firstName = 'First name is required';
+    if (!formData.lastName) newErrors.lastName = 'Last name is required';
+    if (!formData.email) newErrors.email = 'Email is required';
+    if (!formData.password) newErrors.password = 'Password is required';
+    if (formData.password !== formData.confirmPassword) 
+      newErrors.confirmPassword = 'Passwords do not match';
+    if (!formData.companyName) newErrors.companyName = 'Company name is required';
+    if (!formData.businessRegistrationNumber) 
+      newErrors.businessRegistrationNumber = 'Business registration number is required';
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
 
-    if (!formData.agreedToTerms) {
-      alert("You must agree to the Terms");
-      return;
-    }
-
+    setIsSubmitting(true);
+    
     try {
-      await axios.post("http://localhost:5000/api/auth/registerCompany", {
-        name: formData.name,
+      await axios.post('/api/companies/register', {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
         companyName: formData.companyName,
-        businessCode: formData.businessCode,
-        description: formData.description,
+        businessRegistrationNumber: formData.businessRegistrationNumber,
+        description: formData.description
       });
 
-      alert('Submitted for review!');
-      navigate("/login");
+      alert('Company registration submitted for verification!');
+      navigate('/login');
     } catch (error) {
-      console.error("Company signup error:", error.response?.data || error.message);
-      alert(error.response?.data?.message || "Registration failed");
+      console.error('Registration error:', error);
+      alert(error.response?.data?.message || 'Registration failed');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -141,7 +159,7 @@ export default function CompanySignupForm() {
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                 />
               </svg>
-              Go Back
+              Sign Up as an Individual
             </button>
           </Link>
           <p className="mt-6 text-center text-blue-800 text-sm">
@@ -159,3 +177,4 @@ export default function CompanySignupForm() {
     </div>
   );
 }
+export default CompanySignupForm;
