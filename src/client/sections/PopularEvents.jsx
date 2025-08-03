@@ -33,7 +33,7 @@ const PopularEvents = () => {
   
   return (
     <div className="p-4">
-      <h2 className="text-4xl font-bold mb-10 text-center w-full text-black">{isPopular ? 'Popular Now' : 'All Events'}</h2>
+      <h2 className="text-4xl font-bold mb-10 text-center w-full text-very-dark-blue">{isPopular ? 'Popular Now' : 'All Events'}</h2>
         <div className="overflow-x-auto pb-4">
           <div className="flex flex-nowrap gap-4 w-max">
           {displayEvents.map(event => (

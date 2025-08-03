@@ -27,7 +27,7 @@ const companies = [
 export default function OurCompanySection() {
   return (
     <section className="py-12 px-4 mt-24">
-      <h2 className="text-4xl text-black font-bold text-center mb-16">Famous Companies</h2>
+      <h2 className="text-4xl text-very-dark-blue font-bold text-center mb-16">Famous Companies</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 justify-items-center">
         {companies.map((company, idx) => (

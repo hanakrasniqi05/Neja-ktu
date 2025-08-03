@@ -3,12 +3,17 @@ module.exports = {
   darkMode: false,
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Poppins', 'sans-serif'],
+      },
       colors: {
         'very-light-blue': '#90E0EF',
         'light-blue': '#48CAE4',
         'teal-blue': '#00B4D8',
         'blue': '#0096C7',
         'dark-blue': '#023E8A',
+        'very-dark-blue': '#02002c',
+
       },
       keyframes: {
         gradient: {
