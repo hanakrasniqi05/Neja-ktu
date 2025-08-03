@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../assets/logov2.png';
 
@@ -21,24 +21,18 @@ const Header = () => {
           </div>
 
           <div className="hidden md:flex flex-grow justify-end px-8 space-x-10">
-            <Link
-              to="/"
-              className="text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-medium"
+            <NavLink to="/"className={({ isActive }) => isActive ? "text-dark-blue px-3 py-2 text-lg font-medium": "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-large"}
             >
-              Home
-            </Link>
-            <Link
-              to="/events"
-              className="text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-medium"
+            Home
+          </NavLink>
+            <NavLink to="/events"className={({ isActive }) => isActive ? "text-dark-blue px-3 py-2 text-lg font-medium": "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-large"}
             >
-              Events
-            </Link>
-            <Link
-              to="/about-us"
-              className="text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-medium"
+            Events
+          </NavLink>
+            <NavLink to="/about-us"className={({ isActive }) => isActive ? "text-dark-blue px-3 py-2 text-lg font-medium": "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-large"}
             >
-              About Us
-            </Link>
+            About Us
+          </NavLink>
           </div>
 
           <div className="hidden md:flex items-center">
