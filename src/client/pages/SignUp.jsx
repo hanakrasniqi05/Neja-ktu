@@ -7,7 +7,8 @@ export default function SignUp() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     password: "",
@@ -36,15 +37,15 @@ export default function SignUp() {
       return;
     }
 
-    const [firstName, ...rest] = formData.fullName.trim().split(" ");
-    const lastName = rest.join(" ") || "";
-
-    console.log("Sending signup data:", {firstName, lastName, email: formData.email, password: formData.password, role: "user"});
+    if (!formData.firstName || !formData.lastName) {
+      alert("Please enter both first name and last name");
+      return;
+    }
 
     try {
       const res = await axios.post("http://localhost:5000/api/auth/signup", {
-        firstName,
-        lastName,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
         role: "user",
@@ -65,9 +66,16 @@ export default function SignUp() {
           <h2 className="text-[#1E3A8A] text-3xl font-bold mb-8">Sign Up</h2>
           <form onSubmit={handleSubmit} className="space-y-5">
             <input
-              name="fullName"
-              placeholder="Full name *"
-              value={formData.fullName}
+              name="firstName"
+              placeholder="First Name *"
+              value={formData.firstName}
+              onChange={handleChange}
+              className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
+            />
+            <input
+              name="lastName"
+              placeholder="Last Name *"
+              value={formData.lastName}
               onChange={handleChange}
               className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
             />
@@ -128,24 +136,24 @@ export default function SignUp() {
           </form>
           <div className="my-6 text-center text-blue-800 text-sm">Or</div>
           <Link to="/company-signup">
-  <button className="w-full flex items-center justify-center gap-2 border border-blue-200 py-2 rounded-full text-blue-800 hover:bg-[#93C5FD] hover:text-blue-900 transition">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-5 w-5"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M4 6h16M4 10h16M4 14h16M4 18h16"
-      />
-    </svg>
-    Sign Up as a Company
-  </button>
-</Link>
+            <button className="w-full flex items-center justify-center gap-2 border border-blue-200 py-2 rounded-full text-blue-800 hover:bg-[#93C5FD] hover:text-blue-900 transition">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                />
+              </svg>
+              Sign Up as a Company
+            </button>
+          </Link>
 
           <p className="mt-6 text-center text-blue-800 text-sm">
             Already a member?{" "}

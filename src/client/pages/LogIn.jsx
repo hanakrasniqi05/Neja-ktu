@@ -14,21 +14,23 @@ export default function Login() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value.trim() })); 
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
+    console.log('Login data:', formData); // Debug log to see sent data
+
     try {
       const res = await axios.post("http://localhost:5000/api/auth/login", formData);
 
       const token = res.data.data.token;
-      const userData = res.data.data.user; 
+      const userData = res.data.data; // Adjusted according to typical response structure
 
       localStorage.setItem("token", token);
-      localStorage.setItem("userData", JSON.stringify(userData)); 
+      localStorage.setItem("userData", JSON.stringify(userData));
 
       const userRole = userData.role;
       if (userRole === 'admin') navigate('/admin/dashboard');
@@ -37,6 +39,7 @@ export default function Login() {
 
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed');
+      console.error("Login error:", error.response?.data || error.message);
     }
   };
 
