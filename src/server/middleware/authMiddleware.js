@@ -26,6 +26,21 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'User not found' });
     }
 
+    // If company, check verification status
+    if (user[0].Role === 'company') {
+      const [companyRows] = await pool.query(
+        'SELECT verification_status FROM companies WHERE user_id = ?',
+        [user[0].UserId]
+      );
+
+      if (companyRows.length === 0 || companyRows[0].verification_status !== 'verified') {
+        return res.status(403).json({
+          success: false,
+          message: 'unverified account'
+        });
+      }
+    }
+
     req.user = {
       id: user[0].UserId,
       firstName: user[0].FirstName,

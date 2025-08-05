@@ -106,6 +106,21 @@ const login = async (req, res) => {
       });
     }
 
+    // If company, check verification status in companies table
+    if (user.Role === 'company') {
+      const [companyRows] = await pool.query(
+        'SELECT verification_status FROM companies WHERE user_id = ?',
+        [user.UserId]
+      );
+
+      if (companyRows.length === 0 || companyRows[0].verification_status !== 'verified') {
+        return res.status(403).json({
+          success: false,
+          message: 'unverified account'
+        });
+      }
+    }
+
     // Generate token
     const token = jwt.sign(
       { id: user.UserId, role: user.Role },
