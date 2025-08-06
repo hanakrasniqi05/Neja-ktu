@@ -34,8 +34,14 @@ export default function Login() {
 
       const userRole = userData.role;
       if (userRole === 'admin') navigate('/admin/dashboard');
-      else if (userRole === 'company') navigate('/company/dashboard');
-      else navigate('/user/dashboard');
+      else if (userRole === 'company') {
+        // Redirect if company is not verified
+        if (userData.verified === false) {
+          navigate('/pending-verification');
+        } else {
+          navigate('/company/dashboard');
+        }
+      } else navigate('/user/dashboard');
 
     } catch (error) {
       // Show specific message for unverified companies
