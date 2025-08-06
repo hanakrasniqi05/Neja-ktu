@@ -1,35 +1,48 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
+const sequelize = require('../config/database'); 
 
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: { 
-    type: String, 
-    required: true, 
-    enum: ['admin', 'user', 'company'],
-    default: 'user'
+const User = sequelize.define('User', {
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    validate: { isEmail: true },
   },
-  companyDetails: {
-    name: String,
-    address: String,
-    // other company-specific fields
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
-  refreshToken: String,
-  // other common user fields
-}, { timestamps: true });
-
-// Password hashing middleware
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
+  role: {
+    type: DataTypes.ENUM('admin', 'user', 'company'),
+    defaultValue: 'user',
+    allowNull: false,
+  },
+  companyName: {
+    type: DataTypes.STRING,
+  },
+  companyAddress: {
+    type: DataTypes.STRING,
+  },
+  refreshToken: {
+    type: DataTypes.STRING,
+  },
+}, {
+  timestamps: true,
+  hooks: {
+    beforeCreate: async (user) => {
+      user.password = await bcrypt.hash(user.password, 12);
+    },
+    beforeUpdate: async (user) => {
+      if (user.changed('password')) {
+        user.password = await bcrypt.hash(user.password, 12);
+      }
+    },
+  }
 });
 
-// Method to compare passwords
-userSchema.methods.comparePassword = async function(candidatePassword) {
+User.prototype.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = User;

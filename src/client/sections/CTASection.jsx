@@ -1,4 +1,9 @@
+import React from "react";
+import { useNavigate } from "react-router-dom";
+
 export const CTASection = () => {
+  const navigate = useNavigate();
+
     return (
       <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,7 +20,9 @@ export const CTASection = () => {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-4">Për Kompanitë</h3>
                 <p className="text-gray-600 mb-6">Regjistro kompaninë tënde dhe fillo të organizosh ngjarje!</p>
-                <button className="company-btn relative bg-yellow-300 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 hover:text-white">
+                <button
+                onClick={() => navigate("/company-signup")}
+                className="company-btn relative bg-yellow-300 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 hover:text-white">
                   Regjistro Kompaninë
                   <span className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
                 </button>
@@ -32,7 +39,9 @@ export const CTASection = () => {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-4">Për Përdoruesit</h3>
                 <p className="text-gray-600 mb-6">Regjistrohu dhe shijo të gjitha ngjarjet në qytetin tënd!</p>
-                <button className="user-btn relative bg-sky-300 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 hover:text-white">
+                 <button
+                onClick={() => navigate("/sign-up")}
+                className="user-btn relative bg-sky-300 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 hover:text-white">
                   Regjistrohu Si Përdorues
                   <span className="absolute inset-0 bg-gradient-to-r from-sky-400 to-blue-600 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
                 </button>
