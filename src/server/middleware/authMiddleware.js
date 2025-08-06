@@ -56,6 +56,29 @@ const protect = async (req, res, next) => {
   }
 };
 
+// Middleware për të kontrolluar nëse kompania është e verifikuar
+const verifyCompanyVerified = async (req, res, next) => {
+  try {
+    if (req.user.role === 'company') {
+      const [companyRows] = await pool.query(
+        'SELECT verification_status FROM companies WHERE user_id = ?',
+        [req.user.id]
+      );
+
+      if (companyRows.length === 0 || companyRows[0].verification_status !== 'verified') {
+        return res.status(403).json({
+          success: false,
+          message: 'unverified account'
+        });
+      }
+    }
+    next();
+  } catch (error) {
+    console.error('Verification middleware error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 // Role hierarchy definition
 const roleHierarchy = {
   admin: ['admin', 'company', 'user'],
@@ -110,5 +133,6 @@ module.exports = {
   protect,
   requireRole,
   requireAnyRole,
-  adminOnly
+  adminOnly,
+  verifyCompanyVerified
 };
