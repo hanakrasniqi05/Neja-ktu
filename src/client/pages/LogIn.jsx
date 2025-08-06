@@ -38,7 +38,12 @@ export default function Login() {
       else navigate('/user/dashboard');
 
     } catch (error) {
-      setError(error.response?.data?.message || 'Login failed');
+      // Show specific message for unverified companies
+      if (error.response?.data?.message === 'unverified account') {
+        setError('Llogaria juaj është në pritje të verifikimit nga admini.');
+      } else {
+        setError(error.response?.data?.message || 'Login failed');
+      }
       console.error("Login error:", error.response?.data || error.message);
     }
   };
