@@ -9,6 +9,7 @@ import PrivateRoute from './client/components/PrivateRoute';
 import Unauthorized from './client/pages/Unauthorized';
 import TestPage from './client/pages/TestPage';
 import CompanySignUp from "./client/pages/CompanySignupPage";
+import PendingVerification from './client/pages/PendingVerification';
 
 function App() {
   return (
@@ -21,7 +22,8 @@ function App() {
         <Route path="/login" element={<LogIn />} />
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/company-signup" element={<CompanySignUp />} />
+        <Route path="/company-signup" element={<CompanySignUp />} />
+        <Route path="/pending-verification" element={<PendingVerification />} />
         <Route
           path="/test-admin"
           element={
