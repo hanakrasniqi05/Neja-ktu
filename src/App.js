@@ -10,6 +10,7 @@ import Unauthorized from './client/pages/Unauthorized';
 import TestPage from './client/pages/TestPage';
 import CompanySignUp from "./client/pages/CompanySignupPage";
 import PendingVerification from './client/pages/PendingVerification';
+import NotFound from './client/pages/NotFound';
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
             </PrivateRoute>
           }
         />
+          <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
