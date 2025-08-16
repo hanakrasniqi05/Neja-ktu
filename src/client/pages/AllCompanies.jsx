@@ -45,9 +45,13 @@ export default function AllCompanies() {
               <td>{company.name}</td>
               <td>{company.status}</td>
               <td>{company.created_at}</td>
-              <td>
-                <button className="bg-blue-500 text-white px-2 py-1 rounded mr-2">Edit Status</button>
-                <button className="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+              <td className="py-2 px-3 flex gap-2">
+                <button className="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700">
+                    Edit Status
+                  </button>
+                <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
