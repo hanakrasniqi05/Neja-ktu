@@ -67,4 +67,32 @@ exports.registerCompany = async (req, res) => {
   }
 };
 
-// ... keep existing getPendingCompanies and verifyCompany functions ...
+exports.getPendingCompanies = async (req, res) => {
+  const companies = await Company.findAll({ where: { is_verified: false }, include: 'User' });
+  res.json(companies);
+  try {
+    const [companies] = await pool.query(
+      `SELECT c.*, u.FirstName, u.LastName, u.Email 
+       FROM companies c
+       JOIN user u ON c.user_id = u.UserId
+       WHERE u.Verified = 0 AND u.Role = 'company'`
+    );
+    res.json(companies);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error fetching pending companies' });
+  }
+};
+
+exports.verifyCompany = async (req, res) => {
+  const { id } = req.params;
+  await Company.update({ is_verified: true }, { where: { id } });
+  res.json({ message: 'Company verified' });
+  const { verified } = req.body;
+
+ try {
+    await pool.query('UPDATE user SET Verified = ? WHERE UserId = ?', [verified ? 1 : 0, id]);
+    res.json({ message: `Company ${verified ? 'approved' : 'rejected'} successfully` });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error during verification' });
+  }
+};

@@ -5,6 +5,8 @@ import logo from '../assets/logov2.png';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const userData = JSON.parse(localStorage.getItem('userData'));
+  const isLoggedIn = localStorage.getItem('token');
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -34,17 +36,26 @@ const Header = () => {
             About Us
           </NavLink>
           </div>
-
           <div className="hidden md:flex items-center">
-            <Link
-              to="/sign-up"
-              className="hover:bg-blue-700 text-white px-8 py-3 rounded-md text-lg font-medium transition-colors"
-              style={{ backgroundColor: "#00B4D8" }}
-            >
-              Sign Up
-            </Link>
+            {isLoggedIn ? (
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/user-dashboard"
+                  className="text-gray-800 hover:text-blue-600 transition-colors"
+                >
+                  Welcome, {userData?.firstName || 'User'}
+                </Link>
+              </div>
+            ) : (
+              <Link
+                to="/sign-up"
+                className="hover:bg-blue-700 text-white px-8 py-3 rounded-md text-lg font-medium transition-colors"
+                style={{ backgroundColor: "#00B4D8" }}
+              >
+                Sign Up
+              </Link>
+            )}
           </div>
-
           <div className="md:hidden flex items-center">
             <button
               onClick={toggleMenu}

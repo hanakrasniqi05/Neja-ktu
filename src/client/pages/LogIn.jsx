@@ -42,7 +42,7 @@ export default function Login() {
         } else {
           navigate('/company/dashboard');
         }
-      } else navigate('/user/dashboard');
+      } else navigate('/user-dashboard');
 
     } catch (error) {
       // Show specific message for unverified companies

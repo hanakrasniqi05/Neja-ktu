@@ -11,6 +11,7 @@ import TestPage from './client/pages/TestPage';
 import CompanySignUp from "./client/pages/CompanySignupPage";
 import PendingVerification from './client/pages/PendingVerification';
 import NotFound from './client/pages/NotFound';
+import UserDashboard from './client/pages/UserDashboard';
 
 function App() {
   return (
@@ -51,7 +52,8 @@ function App() {
             </PrivateRoute>
           }
         />
-          <Route path="*" element={<NotFound />} />
+        <Route path="/user-dashboard" element={<UserDashboard />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );

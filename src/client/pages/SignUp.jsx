@@ -52,7 +52,7 @@ export default function SignUp() {
       });
 
       localStorage.setItem("token", res.data.data.token);
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
   console.error("Signup error:", error);
   if (error.response) {
