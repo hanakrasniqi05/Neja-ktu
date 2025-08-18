@@ -54,9 +54,23 @@ export default function SignUp() {
       localStorage.setItem("token", res.data.data.token);
       navigate("/dashboard");
     } catch (error) {
-      console.error("Signup error:", error.response?.data || error.message);
-      alert(error.response?.data?.message || "Registration failed");
-    }
+  console.error("Signup error:", error);
+  if (error.response) {
+  
+    console.error("Response data:", error.response.data);
+    console.error("Response status:", error.response.status);
+    console.error("Response headers:", error.response.headers);
+    alert(error.response.data?.message || "Registration failed");
+  } else if (error.request) {
+
+    console.error("No response received:", error.request);
+    alert("No response from server. Please try again.");
+  } else {
+
+    console.error("Request setup error:", error.message);
+    alert("Request error: " + error.message);
+  }
+}
   };
 
   return (
@@ -118,14 +132,14 @@ export default function SignUp() {
                 onChange={handleChange}
                 className="mr-2 accent-[#60A5FA]"
               />
-              I agree to the
-              <a href="#" className="underline mx-1 text-[#2563EB]">
-                Terms of Service
-              </a>
-              and 
-              <a href="#" className="underline text-[#2563EB]">
-                Privacy Policy
-              </a>
+               I agree to the
+                <a href="#" className="underline mx-1 text-[#2563EB]">
+                  Terms of Service
+                </a>
+                and 
+                <a href="#" className="underline ml-1 text-[#2563EB]">
+                  Privacy Policy
+                </a>
             </label>
             <button
               type="submit"

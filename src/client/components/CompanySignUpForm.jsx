@@ -1,24 +1,35 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import logo from "../assets/logo-pin-b.png";
+import logo from '../assets/logo-pin-b.png';
 
 function CompanySignupForm() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
+    // User Account Info
+    userEmail: '',
     password: '',
     confirmPassword: '',
+    firstName: '',
+    lastName: '',
+
+    // Company Info
     companyName: '',
     businessRegistrationNumber: '',
+    companyEmail: '',
+    phoneNumber: '',
+    address: '',
+    website: '',
+    description: '',
+
+    // Legal
     agreedToTerms: false
   });
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
 
-  // Handle input change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -27,25 +38,53 @@ function CompanySignupForm() {
     });
   };
 
-  // Validate form fields
+  const handleLogoUpload = (e) => {
+    setLogoFile(e.target.files[0]);
+  };
+
   const validate = () => {
     const newErrors = {};
-    if (!formData.firstName) newErrors.firstName = 'First name is required';
-    if (!formData.lastName) newErrors.lastName = 'Last name is required';
-    if (!formData.email) newErrors.email = 'Email is required';
-    if (!formData.password) newErrors.password = 'Password is required';
-    if (formData.password !== formData.confirmPassword) 
-      newErrors.confirmPassword = 'Passwords do not match';
-    if (!formData.companyName) newErrors.companyName = 'Company name is required';
-    if (!formData.businessRegistrationNumber) 
-      newErrors.businessRegistrationNumber = 'Business registration number is required';
-    if (!formData.agreedToTerms) newErrors.agreedToTerms = 'You must agree to the terms';
+    
+    // User Account Validation
+    if (!formData.userEmail.trim()) {
+      newErrors.userEmail = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.userEmail = 'Please enter a valid email address';
+    }
 
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+
+    // Company Info Validation
+    if (!formData.companyName.trim()) newErrors.companyName = 'Company name is required';
+    if (!formData.businessRegistrationNumber.trim()) {
+      newErrors.businessRegistrationNumber = 'Business registration number is required';
+    }
+    if (!formData.companyEmail.trim()) {
+      newErrors.companyEmail = 'Company email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.companyEmail)) {
+      newErrors.companyEmail = 'Please enter a valid email address';
+    }
+    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = 'Phone number is required';
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    
+    // Legal
+    if (!formData.agreedToTerms) newErrors.agreedToTerms = 'You must agree to the terms';
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
@@ -53,20 +92,44 @@ function CompanySignupForm() {
     setIsSubmitting(true);
     
     try {
-      await axios.post('http://localhost:5000/api/companies/register',{
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        password: formData.password,
-        companyName: formData.companyName,
-        businessRegistrationNumber: formData.businessRegistrationNumber
+      const formDataToSend = new FormData();
+      
+      // Append user data
+      formDataToSend.append('user_email', formData.userEmail);
+      formDataToSend.append('password', formData.password);
+      formDataToSend.append('full_name', `${formData.firstName} ${formData.lastName}`);
+      formDataToSend.append('role', 'company_admin');
+
+      // Append company data
+      formDataToSend.append('companyName', formData.companyName);
+      formDataToSend.append('businessRegistrationNumber', formData.businessRegistrationNumber);
+      formDataToSend.append('email', formData.companyEmail);
+      formDataToSend.append('phoneNumber', formData.phoneNumber);
+      formDataToSend.append('address', formData.address);
+      formDataToSend.append('website', formData.website);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('verification_status', 'pending');
+
+      // Append logo if exists
+      if (logoFile) {
+        formDataToSend.append('logo_path', logoFile);
+      }
+
+      const response = await axios.post('/api/companies/register', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
-      alert('Company registration submitted for verification!');
-      navigate('/login');
+      if (response.data.success) {
+        alert('Registration successful! Your account is pending verification.');
+        navigate('/login');
+      } else {
+        throw new Error(response.data.message || 'Registration failed');
+      }
     } catch (error) {
       console.error('Registration error:', error);
-      alert(error.response?.data?.message || 'Registration failed');
+      alert(error.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -81,123 +144,187 @@ function CompanySignupForm() {
           <h2 className="text-[#1E3A8A] text-3xl font-bold mb-8">Company Sign Up</h2>
           <form onSubmit={handleSubmit} className="space-y-5">
             
-            {/* First Name */}
-            <input
-              name="firstName"
-              placeholder="First Name *"
-              value={formData.firstName}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
-            />
-            {errors.firstName && <p className="text-red-500 text-sm">{errors.firstName}</p>}
+            {/* User Account Section */}
+            <div className="space-y-4">
+              <h3 className="text-[#1E3A8A] font-semibold">Account Information</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <input
+                    name="firstName"
+                    placeholder="First Name *"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
+                  />
+                  {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+                </div>
 
-            {/* Last Name */}
-            <input
-              name="lastName"
-              placeholder="Last Name *"
-              value={formData.lastName}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
-            />
-            {errors.lastName && <p className="text-red-500 text-sm">{errors.lastName}</p>}
+                <div>
+                  <input
+                    name="lastName"
+                    placeholder="Last Name *"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
+                  />
+                  {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+                </div>
+              </div>
 
-            {/* Email */}
-            <input
-              name="email"
-              type="email"
-              placeholder="Work email *"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
-            />
-            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <input
+                    name="password"
+                    type="password"
+                    placeholder="Password *"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
+                  />
+                  {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+                </div>
 
-            {/* Password */}
-            <input
-              name="password"
-              type="password"
-              placeholder="Password *"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
-            />
-            {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+                <div>
+                  <input
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="Confirm Password *"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
+                  />
+                  {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+                </div>
+              </div>
+            </div>
 
-            {/* Confirm Password */}
-            <input
-              name="confirmPassword"
-              type="password"
-              placeholder="Confirm Password *"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
-            />
-            {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword}</p>}
+            {/* Company Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-[#1E3A8A] font-semibold">Company Information</h3>
+              
+              <div>
+                <input
+                  name="companyName"
+                  placeholder="Company Name *"
+                  value={formData.companyName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
+                />
+                {errors.companyName && <p className="text-red-500 text-sm mt-1">{errors.companyName}</p>}
+              </div>
 
-            {/* Company Name */}
-            <input
-              name="companyName"
-              placeholder="Company name *"
-              value={formData.companyName}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
-            />
-            {errors.companyName && <p className="text-red-500 text-sm">{errors.companyName}</p>}
+              <div>
+                <input
+                  name="businessRegistrationNumber"
+                  placeholder="Business Registration Number *"
+                  value={formData.businessRegistrationNumber}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
+                />
+                {errors.businessRegistrationNumber && <p className="text-red-500 text-sm mt-1">{errors.businessRegistrationNumber}</p>}
+              </div>
 
-            {/* Business Registration Number */}
-            <input
-              name="businessRegistrationNumber"
-              placeholder="Business registration number *"
-              value={formData.businessRegistrationNumber}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
-            />
-            {errors.businessRegistrationNumber && <p className="text-red-500 text-sm">{errors.businessRegistrationNumber}</p>}
+              <div>
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="Company Email *"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
+                />
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+              </div>
+
+              <div>
+                <input
+                  name="phoneNumber"
+                  placeholder="Phone Number *"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
+                />
+                {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
+              </div>
+
+              <div>
+                <input
+                  name="address"
+                  placeholder="Company Address *"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
+                />
+                {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+              </div>
+
+              <div>
+                <input
+                  name="website"
+                  placeholder="Website"
+                  value={formData.website}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <textarea
+                  name="description"
+                  placeholder="Company Description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-blue-800 mb-1">Company Logo</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="w-full text-sm text-blue-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+            </div>
 
             {/* Terms agreement */}
-            <label className="flex items-center text-blue-800 text-sm">
-              <input
-                type="checkbox"
-                name="agreedToTerms"
-                checked={formData.agreedToTerms}
-                onChange={handleChange}
-                className="mr-2 accent-[#60A5FA]"
-              />
-              I agree to the
-              <a href="#" className="underline mx-1 text-[#2563EB]">
-                Terms of Service
-              </a>
-              and 
-              <a href="#" className="underline text-[#2563EB]">
-                Privacy Policy
-              </a>
-            </label>
-            {errors.agreedToTerms && <p className="text-red-500 text-sm">{errors.agreedToTerms}</p>}
+            <div className="mt-4">
+              <label className="flex items-center text-blue-800 text-sm">
+                <input
+                  type="checkbox"
+                  name="agreedToTerms"
+                  checked={formData.agreedToTerms}
+                  onChange={handleChange}
+                  className="mr-2 accent-[#60A5FA]"
+                />
+                I agree to the
+                <a href="#" className="underline mx-1 text-[#2563EB]">
+                  Terms of Service
+                </a>
+                and 
+                <a href="#" className="underline ml-1 text-[#2563EB]">
+                  Privacy Policy
+                </a>
+              </label>
+              {errors.agreedToTerms && <p className="text-red-500 text-sm mt-1">{errors.agreedToTerms}</p>}
+            </div>
 
             {/* Submit button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2 bg-[#60A5FA] text-white font-semibold rounded-full shadow-md hover:bg-[#3B82F6]"
+              className="w-full py-3 bg-[#60A5FA] text-white font-semibold rounded-full shadow-md hover:bg-[#3B82F6] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Submitting...' : 'Submit for Review'}
+              {isSubmitting ? 'Submitting...' : 'Register Company'}
             </button>
           </form>
 
-          {/* Or option */}
-          <div className="my-6 text-center text-blue-800 text-sm">Or</div>
-          <Link to="/sign-up">
-            <button className="w-full flex items-center justify-center gap-2 border border-blue-200 py-2 rounded-full text-blue-800 hover:bg-[#93C5FD] hover:text-blue-900 transition">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-              </svg>
-              Sign Up as an Individual
-            </button>
-          </Link>
-
-          {/* Already a member */}
           <p className="mt-6 text-center text-blue-800 text-sm">
-            Already a member?{" "}
+            Already have an account?{" "}
             <Link to="/login" className="underline text-[#2563EB]">
               Login
             </Link>
