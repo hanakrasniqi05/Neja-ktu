@@ -22,20 +22,28 @@ const allCategories = [
 ];
 
 const EventsPage = () => {
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategories, setSelectedCategories] = useState(['All']);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchEvents = async (categoryLabel) => {
+  const fetchEvents = async (categories) => {
     setLoading(true);
     try {
-      const category = allCategories.find(cat => cat.label === categoryLabel);
       let response;
-      if (category?.id) {
-        response = await eventCategoryAPI.getEventsByCategory(category.id);
-      } else {
+
+      if (categories.includes('All') || categories.length === allCategories.length - 1) {
         response = await eventCategoryAPI.getAllEvents();
+      } else {
+        const categoryIds = categories
+          .map(label => {
+            const category = allCategories.find(cat => cat.label === label);
+            return category?.id;
+          })
+          .filter(id => id !== null);
+
+        response = await eventCategoryAPI.getEventsByCategories(categoryIds);
       }
+
       setEvents(response.data);
     } catch (error) {
       console.error('Failed to fetch events:', error);
@@ -46,20 +54,55 @@ const EventsPage = () => {
   };
 
   useEffect(() => {
-    fetchEvents(selectedCategory);
-  }, [selectedCategory]);
+    fetchEvents(selectedCategories);
+  }, [selectedCategories]);
+
+  const handleCategoryClick = (label) => {
+    setSelectedCategories(prev => {
+      if (label === 'All') {
+        return ['All'];
+      }
+
+      if (prev.includes(label)) {
+        const newSelection = prev.filter(cat => cat !== label);
+        return newSelection.length === 0 ? ['All'] : newSelection;
+      }
+
+      const newSelection = prev.includes('All')
+        ? [label]
+        : [...prev, label];
+
+      if (newSelection.length === allCategories.length - 1) {
+        return ['All'];
+      }
+
+      return newSelection;
+    });
+  };
+
+  const getOrderedCategories = () => {
+    const all = allCategories.find(c => c.label === 'All');
+    const selected = allCategories.filter(c =>
+      c.label !== 'All' && selectedCategories.includes(c.label)
+    );
+    const unselected = allCategories.filter(c =>
+      c.label !== 'All' && !selectedCategories.includes(c.label)
+    );
+
+    return [all, ...selected, ...unselected];
+  };
 
   return (
     <>
       <Header />
       <div className="w-full overflow-x-auto px-6 py-4 bg-blue-50 shadow-md sticky top-0 z-10">
         <div className="flex space-x-4 min-w-max">
-          {allCategories.map(({ label, icon }) => (
+          {getOrderedCategories().map(({ label, icon }) => (
             <button
               key={label}
-              onClick={() => setSelectedCategory(label)}
-              className={`flex items-center space-x-2 px-5 py-2.5 rounded-full border-2 text-sm font-medium transition-all 
-                ${selectedCategory === label
+              onClick={() => handleCategoryClick(label)}
+              className={`flex items-center space-x-2 px-5 py-2.5 rounded-full border-2 text-sm font-medium transition-all
+                ${selectedCategories.includes(label)
                   ? 'bg-light-blue text-white border-blue-600'
                   : 'bg-white text-gray-800 hover:text-white border-gray-300 hover:bg-light-blue'}
               `}

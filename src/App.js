@@ -12,6 +12,7 @@ import CompanySignUp from "./client/pages/CompanySignupPage";
 import PendingVerification from './client/pages/PendingVerification';
 import NotFound from './client/pages/NotFound';
 import UserDashboard from './client/pages/UserDashboard';
+import EventDetailsPage from './client/pages/EventDetailsPage';
 
 function App() {
   return (
@@ -54,6 +55,7 @@ function App() {
         />
         <Route path="/user-dashboard" element={<UserDashboard />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/events/:id" element={<EventDetailsPage/>} />
       </Routes>
     </Router>
   );
