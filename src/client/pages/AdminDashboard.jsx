@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import PendingRequests from "./PendingRequests";
 import AllCompanies from "./AllCompanies";
+import AcceptedCompanies from "./AcceptedCompanies";
+import DeniedCompanies from "./DeniedCompanies";
 
 // Main Admin Dashboard component
 export default function AdminDashboard() {
@@ -15,9 +17,9 @@ export default function AdminDashboard() {
       case "all":
         return <AllCompanies />;
       case "accepted":
-        return <div className="p-6">Accepted Companies Page</div>;
+        return <AcceptedCompanies />;
       case "denied":
-        return <div className="p-6">Denied Companies Page</div>;
+        return <DeniedCompanies />;
       default:
         return <PendingRequests />;
     }
