@@ -9,6 +9,7 @@ const eventCategoryRoutes = require('./routes/eventCategoryRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const authRoutes = require('./routes/authRoutes');
 const pool = require('./database');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/comments', commentRoutes); 
 app.use('/api/event-categories', eventCategoryRoutes);
 app.use('/api/companies', companyRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {
