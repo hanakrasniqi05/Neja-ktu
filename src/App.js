@@ -13,6 +13,7 @@ import PendingVerification from './client/pages/PendingVerification';
 import NotFound from './client/pages/NotFound';
 import UserDashboard from './client/pages/UserDashboard';
 import EventDetailsPage from './client/pages/EventDetailsPage';
+import AdminDashboard from "./client/pages/AdminDashboard";
 
 function App() {
   return (
@@ -20,13 +21,14 @@ function App() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/events" element={<EventsPage  />} />
-        <Route path="/about-us" element={<AboutUs  />} /> 
+        <Route path="/events" element={<EventsPage />} />
+        <Route path="/about-us" element={<AboutUs />} /> 
         <Route path="/login" element={<LogIn />} />
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/company-signup" element={<CompanySignUp />} />
         <Route path="/pending-verification" element={<PendingVerification />} />
+
         <Route
           path="/test-admin"
           element={
@@ -35,7 +37,6 @@ function App() {
             </PrivateRoute>
           }
         />
-
         <Route
           path="/test-company"
           element={
@@ -44,7 +45,6 @@ function App() {
             </PrivateRoute>
           }
         />
-        
         <Route
           path="/test-user"
           element={
@@ -53,13 +53,23 @@ function App() {
             </PrivateRoute>
           }
         />
+
         <Route path="/user-dashboard" element={<UserDashboard />} />
+        <Route path="/events/:id" element={<EventDetailsPage />} />
+
+        <Route
+          path="/admin-dashboard"
+          element={
+            <PrivateRoute allowedRoles={['admin']}>
+              <AdminDashboard />
+            </PrivateRoute>
+          }
+        />
+
         <Route path="*" element={<NotFound />} />
-        <Route path="/events/:id" element={<EventDetailsPage/>} />
       </Routes>
     </Router>
   );
 }
 
 export default App;
-
