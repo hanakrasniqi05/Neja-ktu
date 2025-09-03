@@ -149,6 +149,73 @@ const getMe = async (req, res) => {
   }
 };
 
+// Update current user profile
+const updateMe = async (req, res) => {
+  try {
+    const { firstName, lastName } = req.body;
+    let profilePic = req.body.profilePic;
+
+    // Get current user
+    const [users] = await pool.query(
+      'SELECT * FROM user WHERE UserId = ?',
+      [req.user.id]
+    );
+    const user = users[0];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Build update query dynamically
+    let updates = [];
+    let values = [];
+
+    if (firstName) {
+      updates.push('FirstName = ?');
+      values.push(firstName);
+    }
+    if (lastName) {
+      updates.push('LastName = ?');
+      values.push(lastName);
+    }
+    if (profilePic) {
+      updates.push('ProfilePic = ?');
+      values.push(profilePic);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No fields to update'
+      });
+    }
+
+    values.push(req.user.id);
+
+    await pool.query(
+      `UPDATE user SET ${updates.join(', ')} WHERE UserId = ?`,
+      values
+    );
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during profile update'
+    });
+  }
+  
+};
+
+
 // Get all users (admin only)
 const getAllUsers = async (req, res) => {
   try {
@@ -264,6 +331,7 @@ module.exports = {
   login,
   getMe,
   getAllUsers,
+  updateMe,
   protect,
   requireRole,
   requireAnyRole,

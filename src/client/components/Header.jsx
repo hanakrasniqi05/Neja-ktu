@@ -1,12 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../assets/logov2.png';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const userData = JSON.parse(localStorage.getItem('userData'));
-  const isLoggedIn = localStorage.getItem('token');
+  const [userData, setUserData] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Safely get and parse user data
+    try {
+      const storedData = localStorage.getItem('userData');
+      
+      // Check if storedData is not null, not undefined, and not the string "undefined"
+      if (storedData && storedData !== "undefined" && storedData !== "null") {
+        setUserData(JSON.parse(storedData));
+      } else {
+        setUserData(null);
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      setUserData(null);
+    }
+
+    // Check if token exists and is not "undefined"
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token && token !== "undefined" && token !== "null");
+  }, []);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -119,13 +140,23 @@ const Header = () => {
                 >
                   About Us
                 </Link>
-                <Link
-                  to="/sign-up"
-                  className="text-white bg-blue hover:bg-blue-700 px-8 py-3 rounded-md text-lg font-medium text-center transition-colors w-2/5"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Sign Up
-                </Link>
+                {isLoggedIn ? (
+                  <Link
+                    to="/user-dashboard"
+                    className="text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-medium"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Welcome, {userData?.firstName || 'User'}
+                  </Link>
+                ) : (
+                  <Link
+                    to="/sign-up"
+                    className="text-white bg-blue hover:bg-blue-700 px-8 py-3 rounded-md text-lg font-medium text-center transition-colors w-2/5"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                )}
               </div>
             </motion.div>
           )}

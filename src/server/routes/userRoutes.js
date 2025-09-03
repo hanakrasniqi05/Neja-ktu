@@ -1,13 +1,32 @@
+const pool = require('../database.js');
 const express = require('express');
 const router = express.Router();
-const pool = require('../database.js');
-// Import middleware funksionet me CommonJS
+const { updateMe } = require('../controllers/userController');
+const multer = require('multer');
+const path = require('path');
 const {
   protect,
   adminOnly,
   requireRole,
   requireAnyRole
 } = require('../middleware/authMiddleware');
+
+
+// Configure storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // make sure this folder exists
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // unique filename
+  }
+});
+const upload = multer({ storage });
+
+// PUT route for updating user
+router.put('/me', protect, upload.single('profilePic'), updateMe);
+
+// Import middleware funksionet me CommonJS
 
 // Import controller-at me CommonJS
 const {
@@ -26,6 +45,13 @@ router.use(protect);
 
 // Protected route për përdoruesin aktual
 router.get('/me', getMe);
+
+// Update profile (logged-in user)
+router.put('/me', async (req, res, next) => {
+  const { updateMe } = require('../controllers/userController');
+  return updateMe(req, res, next);
+});
+
 
 // Admin-only routes
 router.get('/admin/dashboard', adminOnly, (req, res) => {
