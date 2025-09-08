@@ -326,6 +326,59 @@ const adminOnly = (req, res, next) => {
   next();
 };
 
+// Password update function with salting
+const updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    // Get user 
+    const [users] = await pool.query(
+      'SELECT * FROM user WHERE UserId = ?',
+      [userId]
+    );
+    const user = users[0];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.Password);
+    if (!isCurrentPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Generate new salt and hash new password
+    const saltRounds = 12;
+    const newSalt = await bcrypt.genSalt(saltRounds);
+    const newHashedPassword = await bcrypt.hash(newPassword, newSalt);
+
+    // Update password and salt in db
+    await pool.query(
+      'UPDATE user SET Password = ?, salt = ? WHERE UserId = ?',
+      [newHashedPassword, newSalt, userId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully'
+    });
+  } catch (error) {
+    console.error('Update password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during password update'
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -335,5 +388,6 @@ module.exports = {
   protect,
   requireRole,
   requireAnyRole,
-  adminOnly
+  adminOnly,
+  updatePassword
 };
