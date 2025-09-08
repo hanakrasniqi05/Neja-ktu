@@ -11,14 +11,6 @@ const {
   requireAnyRole
 } = require('../middleware/authMiddleware');
 
-const {
-  register,
-  login,
-  getMe,
-  getAllUsers,
-  updateMe,
-  updatePassword 
-} = require('../controllers/userController');
 
 // Configure storage
 const storage = multer.diskStorage({
@@ -87,8 +79,5 @@ router.get('/company/dashboard', requireAnyRole('admin', 'company'), (req, res) 
 router.get('/user/dashboard', requireRole('user'), (req, res) => {
   res.json({ success: true, message: 'Welcome to user dashboard', user: req.user });
 });
-
-// Add password update route
-router.put('/update-password', protect, updatePassword);
 
 module.exports = router;

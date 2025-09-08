@@ -27,11 +27,9 @@ const signup = async (req, res) => {
       });
     }
 
-    // Hash password and generate salt
-    console.log("Hashing password and generating salt for new user");
-    const saltRounds = 12;
-    const salt = await bcrypt.genSalt(saltRounds);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    // Hash password
+    console.log("Hashing password for new user");
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Validate and set role
     const userRole = role && ['user', 'company', 'admin'].includes(role) ? role : 'user';
@@ -39,8 +37,8 @@ const signup = async (req, res) => {
 
     // Create user
     const [result] = await pool.query(
-      'INSERT INTO user (FirstName, LastName, Email, Password, Role, salt) VALUES (?, ?, ?, ?, ?, ?)',
-      [firstName, lastName, email, hashedPassword, userRole, salt]
+      'INSERT INTO user (FirstName, LastName, Email, Password, Role) VALUES (?, ?, ?, ?, ?)',
+      [firstName, lastName, email, hashedPassword, userRole]
     );
     console.log("User inserted with ID:", result.insertId);
 
@@ -99,35 +97,13 @@ const login = async (req, res) => {
 
     const user = users[0];
 
-    // Check if user has salt 
-    if (!user.salt) {
-      //using bcrypt's builtin salt verification
-      const isMatch = await bcrypt.compare(password, user.Password);
-      if (!isMatch) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Invalid credentials' 
-        });
-      }
-      
-      // If password matches, upgrade user to use salt
-      const saltRounds = 12;
-      const newSalt = await bcrypt.genSalt(saltRounds);
-      const newHashedPassword = await bcrypt.hash(password, newSalt);
-      
-      await pool.query(
-        'UPDATE user SET Password = ?, salt = ? WHERE UserId = ?',
-        [newHashedPassword, newSalt, user.UserId]
-      );
-    } else {
-      // For users with salt, verify password using stored salt
-      const isMatch = await bcrypt.compare(password, user.Password);
-      if (!isMatch) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Invalid credentials' 
-        });
-      }
+    // Compare passwords
+    const isMatch = await bcrypt.compare(password, user.Password);
+    if (!isMatch) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid credentials' 
+      });
     }
 
     // If company, check verification status in companies table
