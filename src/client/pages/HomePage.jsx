@@ -20,15 +20,6 @@ const HomePage = () => {
         <PopularEvents />
         <OurCompanies />
 
-        {/* Butoni për të shkuar te AdminDashboard */}
-        <div className="my-8 text-center">
-          <button
-            onClick={() => navigate('/admin-dashboard')}
-            className="bg-teal-600 text-white px-6 py-3 rounded hover:bg-teal-700"
-          >
-            Go to Admin Dashboard
-          </button>
-        </div>
       </main>
 
       <Footer />

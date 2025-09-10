@@ -1,36 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import logo from '../assets/logov2.png';
+import React, { useState, useEffect } from "react";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import logo from "../assets/logov2.png";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Safely get and parse user data
     try {
-      const storedData = localStorage.getItem('userData');
-      
-      // Check if storedData is not null, not undefined, and not the string "undefined"
+      const storedData = localStorage.getItem("userData");
       if (storedData && storedData !== "undefined" && storedData !== "null") {
         setUserData(JSON.parse(storedData));
       } else {
         setUserData(null);
       }
     } catch (error) {
-      console.error('Error parsing user data:', error);
+      console.error("Error parsing user data:", error);
       setUserData(null);
     }
 
-    // Check if token exists and is not "undefined"
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     setIsLoggedIn(!!token && token !== "undefined" && token !== "null");
   }, []);
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
+  const toggleMenu = () => setIsOpen(!isOpen);
+
+  // Determine dashboard URL based on role
+  const getDashboardURL = () => {
+    if (!userData) return "/";
+    switch (userData.role) {
+      case "admin":
+        return "/admin-dashboard";
+      case "company":
+        return "/company-dashboard";
+      case "user":
+        return "/user-dashboard";
+      default:
+        return "/";
+    }
+  };
+
+  const getDashboardLabel = () => {
+    if (!userData) return "Dashboard";
+    switch (userData.role) {
+      case "admin":
+        return "Admin Dashboard";
+      case "company":
+        return "Company Dashboard";
+      case "user":
+        return "User Dashboard";
+      default:
+        return "Dashboard";
+    }
   };
 
   return (
@@ -43,30 +67,53 @@ const Header = () => {
             </Link>
           </div>
 
-          <div className="hidden md:flex flex-grow justify-end px-8 space-x-10">
-            <NavLink to="/"className={({ isActive }) => isActive ? "text-dark-blue px-3 py-2 text-lg font-medium": "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-large"}
+          {/* Desktop navigation */}
+          <div className="hidden md:flex flex-grow justify-end px-8 space-x-6 items-center">
+            <NavLink
+              to="/"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-dark-blue px-3 py-2 text-lg font-medium"
+                  : "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-large"
+              }
             >
-            Home
-          </NavLink>
-            <NavLink to="/events"className={({ isActive }) => isActive ? "text-dark-blue px-3 py-2 text-lg font-medium": "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-large"}
+              Home
+            </NavLink>
+            <NavLink
+              to="/events"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-dark-blue px-3 py-2 text-lg font-medium"
+                  : "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-large"
+              }
             >
-            Events
-          </NavLink>
-            <NavLink to="/about-us"className={({ isActive }) => isActive ? "text-dark-blue px-3 py-2 text-lg font-medium": "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-large"}
+              Events
+            </NavLink>
+            <NavLink
+              to="/about-us"
+              className={({ isActive }) =>
+                isActive
+                  ? "text-dark-blue px-3 py-2 text-lg font-medium"
+                  : "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-large"
+              }
             >
-            About Us
-          </NavLink>
-          </div>
-          <div className="hidden md:flex items-center">
+              About Us
+            </NavLink>
+
+            {/* Logged-in dashboard button */}
             {isLoggedIn ? (
-              <div className="flex items-center space-x-4">
-                <Link
-                  to="/user-dashboard"
-                  className="text-gray-800 hover:text-blue-600 transition-colors"
+              <>
+                <span className="text-gray-800">
+                  Welcome, {userData?.firstName || "User"}
+                </span>
+                <button
+                  onClick={() => navigate(getDashboardURL())}
+                  className="bg-blue text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                  style={{ backgroundColor: "#00B4D8" }}
                 >
-                  Welcome, {userData?.firstName || 'User'}
-                </Link>
-              </div>
+                  {getDashboardLabel()}
+                </button>
+              </>
             ) : (
               <Link
                 to="/sign-up"
@@ -77,6 +124,8 @@ const Header = () => {
               </Link>
             )}
           </div>
+
+          {/* Mobile menu toggle */}
           <div className="md:hidden flex items-center">
             <button
               onClick={toggleMenu}
@@ -85,30 +134,23 @@ const Header = () => {
             >
               <div className="w-8 space-y-2">
                 <motion.span
-                  animate={{
-                    rotate: isOpen ? 45 : 0,
-                    y: isOpen ? 8 : 0,
-                  }}
+                  animate={{ rotate: isOpen ? 45 : 0, y: isOpen ? 8 : 0 }}
                   className="block h-1 w-full bg-blue rounded"
-                ></motion.span>
+                />
                 <motion.span
-                  animate={{
-                    opacity: isOpen ? 0 : 1,
-                  }}
+                  animate={{ opacity: isOpen ? 0 : 1 }}
                   className="block h-1 w-full bg-blue rounded"
-                ></motion.span>
+                />
                 <motion.span
-                  animate={{
-                    rotate: isOpen ? -45 : 0,
-                    y: isOpen ? -8 : 0,
-                  }}
+                  animate={{ rotate: isOpen ? -45 : 0, y: isOpen ? -8 : 0 }}
                   className="block h-1 w-full bg-blue rounded"
-                ></motion.span>
+                />
               </div>
             </button>
           </div>
         </div>
 
+        {/* Mobile dropdown menu */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
@@ -140,18 +182,28 @@ const Header = () => {
                 >
                   About Us
                 </Link>
+
                 {isLoggedIn ? (
-                  <Link
-                    to="/user-dashboard"
-                    className="text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-medium"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Welcome, {userData?.firstName || 'User'}
-                  </Link>
+                  <>
+                    <span className="text-gray-800 px-3 py-2 text-lg">
+                      Welcome, {userData?.firstName || "User"}
+                    </span>
+                    <button
+                      onClick={() => {
+                        navigate(getDashboardURL());
+                        setIsOpen(false);
+                      }}
+                      className="bg-blue text-white px-6 py-3 rounded hover:bg-blue-700 transition-colors w-11/12 mx-3"
+                      style={{ backgroundColor: "#00B4D8" }}
+                    >
+                      {getDashboardLabel()}
+                    </button>
+                  </>
                 ) : (
                   <Link
                     to="/sign-up"
-                    className="text-white bg-blue hover:bg-blue-700 px-8 py-3 rounded-md text-lg font-medium text-center transition-colors w-2/5"
+                    className="text-white bg-blue hover:bg-blue-700 px-6 py-3 rounded text-center text-lg font-medium w-11/12 mx-3 transition-colors"
+                    style={{ backgroundColor: "#00B4D8" }}
                     onClick={() => setIsOpen(false)}
                   >
                     Sign Up

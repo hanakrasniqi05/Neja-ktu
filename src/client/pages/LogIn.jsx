@@ -34,7 +34,7 @@ export default function Login() {
       localStorage.setItem("userData", JSON.stringify(userData));
 
       const userRole = userData.role;
-      if (userRole === 'admin') navigate('/admin/dashboard');
+      if (userRole === 'admin') navigate('/admin-dashboard');
       else if (userRole === 'company') {
         // Redirect if company is not verified
         if (userData.verified === false) {
