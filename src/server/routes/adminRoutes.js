@@ -9,6 +9,9 @@ const {
   deleteCompany,
   updateCompanyStatus
 } = require("../controllers/adminController");
+const {getAllEvents} = require("../controllers/eventController")
+const{getAllUsers}= require("../controllers/userController");
+const{getAllRsvps} = require("../controllers/rsvpController");
 
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 
@@ -27,5 +30,14 @@ router.put("/companies/:id/status", protect, adminOnly, updateCompanyStatus);
 
 // Delete company
 router.delete("/companies/:id", protect, adminOnly, deleteCompany);
+
+//get eventet
+router.get("/events", protect, adminOnly, getAllEvents);
+
+//get userat
+router.get("/users", protect, adminOnly, getAllUsers);
+
+// get rsvp
+router.get("/rsvps", protect, adminOnly, getAllRsvps);
 
 module.exports = router;

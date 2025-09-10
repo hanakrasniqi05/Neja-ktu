@@ -47,7 +47,7 @@ export default function DeniedCompanies() {
                 {new Date(company.created_at).toLocaleDateString()}
               </td>
               <td className="py-2 px-3 flex gap-2">
-                <button className="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700">
+                <button className="bg-teal-blue text-white px-3 py-1 rounded hover:opacity-90">
                   Edit Status
                 </button>
                 <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
