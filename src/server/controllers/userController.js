@@ -220,7 +220,7 @@ const updateMe = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT UserId as id, FirstName as firstName, LastName as lastName, Email as email, Role as role FROM user'
+     'SELECT UserId as id, FirstName as firstName, LastName as lastName, Email as email, Role as role, ProfilePicture as profilePicture FROM user'
     );
     
     res.json({

@@ -1,13 +1,25 @@
 import React, { useState } from "react";
-import Sidebar from "./Sidebar";
-import PendingRequests from "./PendingRequests";
-import AllCompanies from "./AllCompanies";
-import AcceptedCompanies from "./AcceptedCompanies";
-import DeniedCompanies from "./DeniedCompanies";
+import Sidebar from "../sections/Sidebar";
+import PendingRequests from "../sections/PendingRequests";
+import AllCompanies from "../sections/AllCompanies";
+import AcceptedCompanies from "../sections/AcceptedCompanies";
+import DeniedCompanies from "../sections/DeniedCompanies";
+import AllEvents from "../sections/AllEvents";
+import AllUsers from "../sections/AllUsers";
+import RSVPs from "../sections/RSVPs";
 
-// Main Admin Dashboard component
+// placeholder per ststistika
+function DashboardStats() {
+  return (
+    <div className="p-6">
+      <h2 className="text-xl font-bold mb-4">📊 Dashboard Stats</h2>
+      <p>Statistika per faqe, usera, rsvp etj...</p>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
-  const [currentPage, setCurrentPage] = useState("pending"); // Track current page
+  const [currentPage, setCurrentPage] = useState("pending");
 
   // Render content based on current page
   const renderPage = () => {
@@ -20,6 +32,14 @@ export default function AdminDashboard() {
         return <AcceptedCompanies />;
       case "denied":
         return <DeniedCompanies />;
+      case "all-events":
+        return <AllEvents />;
+      case "all-users":
+        return <AllUsers />;
+      case "rsvps":
+        return <RSVPs />;
+      case "dashboard":
+        return <DashboardStats />;
       default:
         return <PendingRequests />;
     }

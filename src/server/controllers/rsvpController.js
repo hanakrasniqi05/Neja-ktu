@@ -79,3 +79,26 @@ exports.deleteRSVP = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
+
+//get all rsvps
+exports.getAllRsvps = async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        r.RsvpID,
+        r.Status,
+        r.CreatedAt,
+        u.Name AS UserName,
+        u.Email AS UserEmail,
+        e.Title AS EventTitle
+      FROM rsvps r
+      JOIN users u ON r.UserID = u.UserID
+      JOIN events e ON r.EventID = e.EventID
+      ORDER BY r.CreatedAt DESC
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error fetching RSVPs:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
