@@ -1,14 +1,7 @@
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo-pin-b.png'; 
 
-const handleLogout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('userData');
-  window.location.reload();
-};
-
 const Footer = () => {
-  const isLoggedIn = !!localStorage.getItem("token");
 
   return (
     <div className="relative mt-24"> 
@@ -62,14 +55,6 @@ const Footer = () => {
             <p className="text-sm text-black">
               © {new Date().getFullYear()} Eventet Kosovë. Të gjitha të drejtat e rezervuara.
             </p>
-            {isLoggedIn && (
-              <button
-                onClick={handleLogout}
-                className="mt-4 px-6 py-2 bg-yellow-400 text-white rounded-md transition"
-              >
-                Log Out
-              </button>
-            )}
           </div>
         </div>
       </footer>

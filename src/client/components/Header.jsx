@@ -1,29 +1,34 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 import logo from "../assets/logov2.png";
 
-const Header = () => {
+export default function Header({ onOpenEditProfile }) {
   const [isOpen, setIsOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
-    try {
-      const storedData = localStorage.getItem("userData");
-      if (storedData && storedData !== "undefined" && storedData !== "null") {
-        setUserData(JSON.parse(storedData));
-      } else {
-        setUserData(null);
-      }
-    } catch (error) {
-      console.error("Error parsing user data:", error);
-      setUserData(null);
+    const storedData = localStorage.getItem("userData");
+    if (storedData && storedData !== "undefined" && storedData !== "null") {
+      setUserData(JSON.parse(storedData));
     }
-
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token && token !== "undefined" && token !== "null");
+  }, []);
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -32,29 +37,17 @@ const Header = () => {
   const getDashboardURL = () => {
     if (!userData) return "/";
     switch (userData.role) {
-      case "admin":
-        return "/admin-dashboard";
-      case "company":
-        return "/company-dashboard";
-      case "user":
-        return "/user-dashboard";
-      default:
-        return "/";
+      case "admin": return "/admin-dashboard";
+      case "company": return "/company-dashboard";
+      case "user": return "/user-dashboard";
+      default: return "/";
     }
   };
 
-  const getDashboardLabel = () => {
-    if (!userData) return "Dashboard";
-    switch (userData.role) {
-      case "admin":
-        return "Admin Dashboard";
-      case "company":
-        return "Company Dashboard";
-      case "user":
-        return "User Dashboard";
-      default:
-        return "Dashboard";
-    }
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userData");
+    window.location.href = "/";
   };
 
   return (
@@ -67,14 +60,13 @@ const Header = () => {
             </Link>
           </div>
 
-          {/* Desktop navigation */}
           <div className="hidden md:flex flex-grow justify-end px-8 space-x-6 items-center">
             <NavLink
               to="/"
               className={({ isActive }) =>
                 isActive
                   ? "text-dark-blue px-3 py-2 text-lg font-medium"
-                  : "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-large"
+                  : "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg"
               }
             >
               Home
@@ -84,7 +76,7 @@ const Header = () => {
               className={({ isActive }) =>
                 isActive
                   ? "text-dark-blue px-3 py-2 text-lg font-medium"
-                  : "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-large"
+                  : "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg"
               }
             >
               Events
@@ -94,26 +86,62 @@ const Header = () => {
               className={({ isActive }) =>
                 isActive
                   ? "text-dark-blue px-3 py-2 text-lg font-medium"
-                  : "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-large"
+                  : "text-gray-800 hover:text-dark-blue px-3 py-2 text-lg"
               }
             >
               About Us
             </NavLink>
 
-            {/* Logged-in dashboard button */}
             {isLoggedIn ? (
-              <>
-                <span className="text-gray-800">
-                  Welcome, {userData?.firstName || "User"}
-                </span>
+              <div className="relative" ref={dropdownRef}>
                 <button
-                  onClick={() => navigate(getDashboardURL())}
-                  className="bg-blue text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-                  style={{ backgroundColor: "#00B4D8" }}
+                  onClick={() => setDropdownOpen((p) => !p)}
+                  className="flex items-center text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-medium"
                 >
-                  {getDashboardLabel()}
+                  {userData?.firstName || "User"}
+                  <ChevronDown
+                    className={`ml-1 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
+                    size={18}
+                  />
                 </button>
-              </>
+
+                <AnimatePresence>
+                  {dropdownOpen && (
+                    <motion.ul
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 w-44 bg-white border rounded-md shadow-lg"
+                    >
+                      <li>
+                        <button
+                          onClick={() => {
+                            navigate(getDashboardURL());
+                            setDropdownOpen(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                        >
+                          Dashboard
+                        </button>
+                      </li>
+                      <li>
+                      </li>
+                      <li>
+                        <button
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            handleLogout();
+                          }}
+                          className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+                        >
+                          Logout
+                        </button>
+                      </li>
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+              </div>
             ) : (
               <Link
                 to="/sign-up"
@@ -124,8 +152,6 @@ const Header = () => {
               </Link>
             )}
           </div>
-
-          {/* Mobile menu toggle */}
           <div className="md:hidden flex items-center">
             <button
               onClick={toggleMenu}
@@ -149,8 +175,6 @@ const Header = () => {
             </button>
           </div>
         </div>
-
-        {/* Mobile dropdown menu */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
@@ -185,9 +209,6 @@ const Header = () => {
 
                 {isLoggedIn ? (
                   <>
-                    <span className="text-gray-800 px-3 py-2 text-lg">
-                      Welcome, {userData?.firstName || "User"}
-                    </span>
                     <button
                       onClick={() => {
                         navigate(getDashboardURL());
@@ -196,7 +217,16 @@ const Header = () => {
                       className="bg-blue text-white px-6 py-3 rounded hover:bg-blue-700 transition-colors w-11/12 mx-3"
                       style={{ backgroundColor: "#00B4D8" }}
                     >
-                      {getDashboardLabel()}
+                      Dashboard
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        handleLogout();
+                      }}
+                      className="text-red-600 hover:text-dark-blue px-3 py-2 text-lg text-left"
+                    >
+                      Logout
                     </button>
                   </>
                 ) : (
@@ -216,6 +246,4 @@ const Header = () => {
       </div>
     </nav>
   );
-};
-
-export default Header;
+}
