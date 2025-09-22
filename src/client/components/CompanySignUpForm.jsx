@@ -7,7 +7,6 @@ function CompanySignupForm() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     // User Account Info
-    userEmail: '',
     password: '',
     confirmPassword: '',
     firstName: '',
@@ -46,12 +45,6 @@ function CompanySignupForm() {
     const newErrors = {};
     
     // User Account Validation
-    if (!formData.userEmail.trim()) {
-      newErrors.userEmail = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.userEmail = 'Please enter a valid email address';
-    }
-
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
@@ -89,26 +82,21 @@ function CompanySignupForm() {
     e.preventDefault();
     if (!validate()) return;
 
-    setIsSubmitting(true);
-    
-    try {
-      const formDataToSend = new FormData();
-      
-      // Append user data
-      formDataToSend.append('user_email', formData.userEmail);
-      formDataToSend.append('password', formData.password);
-      formDataToSend.append('full_name', `${formData.firstName} ${formData.lastName}`);
-      formDataToSend.append('role', 'company_admin');
+  setIsSubmitting(true);
 
-      // Append company data
-      formDataToSend.append('companyName', formData.companyName);
-      formDataToSend.append('businessRegistrationNumber', formData.businessRegistrationNumber);
-      formDataToSend.append('email', formData.companyEmail);
-      formDataToSend.append('phoneNumber', formData.phoneNumber);
-      formDataToSend.append('address', formData.address);
-      formDataToSend.append('website', formData.website);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('verification_status', 'pending');
+  try {
+    const formDataToSend = new FormData(); 
+
+    formDataToSend.append('firstName', formData.firstName);
+    formDataToSend.append('lastName', formData.lastName);
+    formDataToSend.append('password', formData.password);
+    formDataToSend.append('companyName', formData.companyName);
+    formDataToSend.append('businessRegistrationNumber', formData.businessRegistrationNumber);
+    formDataToSend.append('companyEmail', formData.companyEmail); 
+    formDataToSend.append('phoneNumber', formData.phoneNumber);
+    formDataToSend.append('address', formData.address);
+    formDataToSend.append('website', formData.website);
+    formDataToSend.append('description', formData.description);
 
       // Append logo if exists
       if (logoFile) {
@@ -227,14 +215,14 @@ function CompanySignupForm() {
 
               <div>
                 <input
-                  name="email"
+                  name="companyEmail"
                   type="email"
                   placeholder="Company Email *"
-                  value={formData.email}
+                  value={formData.companyEmail}
                   onChange={handleChange}
                   className="w-full px-4 py-2 rounded-md border border-blue-200 bg-transparent text-[#1E3A8A] placeholder-blue-600 focus:outline-none"
                 />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                {errors.companyEmail && <p className="text-red-500 text-sm mt-1">{errors.companyEmail}</p>}
               </div>
 
               <div>
