@@ -2,26 +2,27 @@ const RSVP = require('../models/rsvp');
 
 // Create RSVP
 exports.createRSVP = async (req, res) => {
-  const { user_id, event_id, status } = req.body;
+  const { event_id, status } = req.body;
+  const user_id = req.user.id; 
 
-  if (!user_id || !event_id) {
-    return res.status(400).json({ success: false, message: 'user_id and event_id are required' });
+  if (!event_id) {
+    return res.status(400).json({ success: false, message: 'event_id is required' });
   }
 
   try {
-    //exists?
     const existing = await RSVP.getRSVP(user_id, event_id);
     if (existing) {
-      return res.status(400).json({ success: false, message: 'RSVP already exists for this user and event' });
+      return res.status(400).json({ success: false, message: 'RSVP already exists' });
     }
 
-    const rsvpId = await RSVP.createRSVP(user_id, event_id, status);
+    const rsvpId = await RSVP.createRSVP(user_id, event_id, status || 'attending');
     res.status(201).json({ success: true, message: 'RSVP created', rsvp_id: rsvpId });
   } catch (error) {
     console.error('CREATE RSVP ERROR:', error);
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
 
 // Get all RSVPs for event
 exports.getRSVPsByEvent = async (req, res) => {

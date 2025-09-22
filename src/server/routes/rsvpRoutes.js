@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { protect, requireRole } = require('../middleware/authMiddleware');
 
 const {
   createRSVP,
@@ -9,15 +10,15 @@ const {
 } = require('../controllers/rsvpController');
 
 // Add 
-router.post('/', createRSVP);
+router.post('/', protect, requireRole('user'), createRSVP);
 
 // Get all 
 router.get('/event/:eventId', getRSVPsByEvent);
 
 // Update  
-router.put('/', updateRSVP);
+router.put('/', protect, requireRole('user'), updateRSVP);
 
 // Delete 
-router.delete('/', deleteRSVP);
+router.delete('/', protect, requireRole('user'), deleteRSVP);
 
 module.exports = router;

@@ -10,7 +10,7 @@ const companyRoutes = require('./routes/companyRoutes');
 const authRoutes = require('./routes/authRoutes');
 const pool = require('./database');
 const adminRoutes = require('./routes/adminRoutes');
-
+const rsvpRoutes = require ('./routes/rsvpRoutes');
 const app = express();
 
 // Middleware për të lexuar JSON në body
@@ -53,6 +53,7 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/event-categories', eventCategoryRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/rsvp', rsvpRoutes)
 
 // 404 handler
 app.use((req, res) => {
