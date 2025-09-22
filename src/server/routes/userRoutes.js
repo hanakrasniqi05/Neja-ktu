@@ -2,6 +2,7 @@ const pool = require('../database.js');
 const express = require('express');
 const router = express.Router();
 const { updateMe } = require('../controllers/userController');
+const { deleteMe } = require('../controllers/userController');
 const multer = require('multer');
 const path = require('path');
 const {
@@ -46,11 +47,7 @@ router.use(protect);
 // Protected route për përdoruesin aktual
 router.get('/me', getMe);
 
-// Update profile (logged-in user)
-router.put('/me', async (req, res, next) => {
-  const { updateMe } = require('../controllers/userController');
-  return updateMe(req, res, next);
-});
+router.delete('/me', protect, deleteMe);
 
 
 // Admin-only routes

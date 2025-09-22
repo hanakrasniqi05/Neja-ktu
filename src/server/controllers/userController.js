@@ -214,6 +214,35 @@ const updateMe = async (req, res) => {
   }
   
 };
+const deleteMe = async (req, res) => {
+  try {
+    const [users] = await pool.query(
+      'SELECT * FROM user WHERE UserId = ?',
+      [req.user.id]
+    );
+    const user = users[0];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    await pool.query('DELETE FROM user WHERE UserId = ?', [req.user.id]);
+
+    res.json({
+      success: true,
+      message: 'Your account has been deleted'
+    });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during account deletion'
+    });
+  }
+};
 
 
 // Get all users (admin only)
@@ -335,5 +364,6 @@ module.exports = {
   protect,
   requireRole,
   requireAnyRole,
-  adminOnly
+  adminOnly,
+  deleteMe
 };

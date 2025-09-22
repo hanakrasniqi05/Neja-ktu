@@ -8,6 +8,7 @@ export default function EditProfile({ user, onSave }) {
   });
   const [preview, setPreview] = useState(user?.profilePic || "");
   const [open, setOpen] = useState(false);
+  const token = localStorage.getItem("token");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -17,22 +18,19 @@ export default function EditProfile({ user, onSave }) {
   const handlePicChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // for preview, but here we’ll just simulate uploading
       setPreview(URL.createObjectURL(file));
-      // in real app, you’d upload the file and store URL
       setForm({ ...form, profilePic: `/uploads/${file.name}` });
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const res = await fetch("http://localhost:5000/api/users/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(form)
       });
@@ -50,10 +48,31 @@ export default function EditProfile({ user, onSave }) {
       alert("Something went wrong");
     }
   };
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to permanently delete your account?")) return;
+
+    try {
+      const res = await fetch("http://localhost:5000/api/users/me", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("Account deleted. You will be logged out.");
+        localStorage.removeItem("token");
+        window.location.href = "/";
+      } else {
+        alert(data.message || "Delete failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    }
+  };
 
   return (
     <div>
-      {/* Button to toggle modal */}
       <button
         onClick={() => setOpen(true)}
         className="px-4 py-2 bg-teal-blue w-full text-white rounded-lg shadow-md"
@@ -106,7 +125,15 @@ export default function EditProfile({ user, onSave }) {
                 )}
               </div>
 
-              <div className="flex justify-end gap-2">
+             <div className="pt-2 border-t">
+              <p
+                onClick={handleDelete}
+                className="mt-2 cursor-pointer text-red-600 underline hover:text-red-700"
+              >
+                Delete Account
+              </p>
+            </div>
+              <div className="flex justify-end gap-2 mt-4">
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
