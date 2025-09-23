@@ -108,8 +108,7 @@ function CompanySignupForm() {
           'Content-Type': 'multipart/form-data'
         }
       });
-
-      if (response.data.success) {
+      if (response.data.status === 'pending') {
         alert('Registration successful! Your account is pending verification.');
         navigate('/login');
       } else {
