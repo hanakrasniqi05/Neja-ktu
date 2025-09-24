@@ -30,7 +30,7 @@ const EventDetailsPage = () => {
   const fetchComments = async () => {
     try {
       setCommentsLoading(true);
-      const res = await axios.get(`${commentAPI}/event/${id}`);
+      const res = await commentAPI.getById(id); 
       console.log("Fetched comments:", res.data);
       setComments(res.data);
     } catch (error) {
@@ -64,17 +64,14 @@ const EventDetailsPage = () => {
         return;
       }
 
-      const res = await axios.post(
-        `${commentAPI}/${id}`,
-        { comment: newComment },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      // Refresh comments 
-      await fetchComments();
+  const res = await commentAPI.create(
+  { eventId: id, content: newComment },
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+    setComments((prev) => [res.data, ...prev]);
       setNewComment("");
     } catch (error) {
-      console.error("Error posting comment:", error);
+     console.error("Error posting comment:", error.response?.data || error.message);
       alert("Failed to post comment.");
     } finally {
       setIsSubmitting(false);
@@ -179,35 +176,36 @@ const EventDetailsPage = () => {
           </h2>
 
           {/* Add comment form */}
-          <form onSubmit={handleAddComment} className="mb-6">
-            <div className="relative">
-              <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Write a comment..."
-                className="w-full border rounded p-3 pr-24 focus:ring-2 focus:ring-blue-300 focus:border-blue-300 resize-vertical"
-                rows={3}
-              />
-              {/* Button*/}
-              <div className="absolute bottom-3 right-3 z-10">
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !newComment.trim()}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors shadow-md"
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Posting
-                    </span>
-                  ) : "Post"}
-                </button>
-              </div>
-            </div>
-          </form>
+<form onSubmit={handleAddComment} className="mb-6">
+  <div className="relative">
+    <textarea
+      value={newComment}
+      onChange={(e) => setNewComment(e.target.value)}
+      placeholder="Write a comment..."
+      className="w-full border rounded p-3 pr-24 focus:ring-2 focus:ring-blue-300 focus:border-blue-300 resize-vertical"
+      rows={3}
+    />
+    {/* Button */}
+    <div className="absolute bottom-3 right-3 z-10">
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors shadow-md"
+      >
+        {isSubmitting ? (
+          <span className="flex items-center">
+            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Posting
+          </span>
+        ) : "Post"}
+      </button>
+    </div>
+  </div>
+</form>
+
 
           {/* Comment list */}
           {commentsLoading ? (

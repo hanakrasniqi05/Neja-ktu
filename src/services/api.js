@@ -52,12 +52,12 @@ export const companyAPI = {
 };
 
 export const commentAPI = {
-  create: (data) => api.post('/comments', data),
+  create: (data, config = {}) => api.post('/comments', data, config),
   getAll: () => api.get('/comments'),
   getById: (id) => api.get(`/comments/${id}`),
   update: (id, data) => api.put(`/comments/${id}`, data),
   delete: (id) => api.delete(`/comments/${id}`),
-  getByEvent: (eventId) => api.get(`/comments/event/${eventId}`),
+  getByEvent: (eventId) => api.get(`/comments/${eventId}`),
   getByUser: (userId) => api.get(`/comments/user/${userId}`),
 };
 

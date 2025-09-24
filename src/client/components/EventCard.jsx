@@ -21,7 +21,7 @@ const EventCard = ({ event }) => {
             className="w-8 h-8 rounded-full mr-2"
             alt="Company"
           />
-          <h3 className="font-bold text-lg">{event.Title}
+          <h3 className="font-bold text-lg">
              <Link to={`/events/${event.EventID}`} className="hover:underline">
               {event.Title}
             </Link>
