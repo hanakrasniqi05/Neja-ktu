@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require("path");
+const fs = require("fs");
 
 const userRoutes = require('./routes/userRoutes');
 const eventRoutes = require('./routes/eventRoutes');
@@ -11,11 +13,23 @@ const authRoutes = require('./routes/authRoutes');
 const pool = require('./database');
 const adminRoutes = require('./routes/adminRoutes');
 const rsvpRoutes = require ('./routes/rsvpRoutes');
+const companyEventRoutes = require("./routes/companyEventRoutes");
+
 const app = express();
+
+// Kontrolli i folderit 'uploads'
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+  console.log("Folder 'uploads' u krijua automatikisht.");
+}
 
 // Middleware për të lexuar JSON në body
 app.use(cors());
 app.use(express.json());
+
+// Lejon qasje në imazhet e ngarkuara
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Testim lidhje me DB
 (async () => {
@@ -40,6 +54,7 @@ app.get('/', (req, res) => {
       comments: '/api/comments',
       eventCategories: '/api/event-categories',
       companies: '/api/companies',
+      companyEvents: '/api/company-events',
       auth: '/api/auth'
     }
   });
@@ -54,6 +69,7 @@ app.use('/api/event-categories', eventCategoryRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/rsvp', rsvpRoutes)
+app.use("/api/company-events", companyEventRoutes);
 
 // 404 handler
 app.use((req, res) => {
