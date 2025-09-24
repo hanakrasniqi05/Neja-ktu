@@ -1,3 +1,4 @@
+const pool = require("../database");
 const RSVP = require('../models/rsvp');
 
 // Create RSVP
@@ -100,6 +101,39 @@ exports.getAllRsvps = async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error("Error fetching RSVPs:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+exports.getRSVPsByUser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    console.log("Fetching RSVPs for user:", userId);
+    
+    const [rows] = await pool.query(
+      `SELECT 
+      r.rsvp_id AS RsvpID, 
+      r.status AS Status, 
+      r.rsvp_date AS CreatedAt, 
+      e.EventID,
+      e.Title,
+      e.Description,
+      e.StartDateTime,
+      e.EndDateTime
+      FROM rsvp r
+      JOIN events e ON r.event_id = e.EventID
+      WHERE r.user_id = ?
+      ORDER BY r.rsvp_date DESC
+
+  `,
+      [userId]
+    );
+    
+    console.log("Found RSVPs:", rows);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error fetching user RSVPs:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
