@@ -5,7 +5,8 @@ const path = require('path');
 const {
   registerCompany,
   getPendingCompanies,
-  verifyCompany
+  verifyCompany,
+  getTopCompanies
 } = require('../controllers/companyController');
 const { protect, adminOnly, verifyCompanyVerified } = require('../middleware/authMiddleware');
 
@@ -23,5 +24,7 @@ router.patch('/:id/verify', protect, adminOnly, verifyCompany);
 router.get('/dashboard', protect, verifyCompanyVerified, (req, res) => {
   res.json({ success: true, message: "Welcome to your company dashboard" });
 });
+
+router.get('/top', getTopCompanies);
 
 module.exports = router;

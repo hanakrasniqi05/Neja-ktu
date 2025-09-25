@@ -199,3 +199,37 @@ exports.verifyCompany = async (req, res) => {
     });
   }
 };
+exports.getTopCompanies = async (req, res) => {
+  try {
+    const [companies] = await pool.query(
+      `SELECT 
+          c.id,
+          c.company_name,
+          c.logo_path,
+          COUNT(e.EventID) AS eventCount
+       FROM companies c
+       LEFT JOIN user u ON c.user_id = u.UserId
+       LEFT JOIN events e ON e.CompanyID = u.UserId
+       WHERE c.verification_status = 'verified'
+       GROUP BY c.id, c.company_name, c.logo_path
+       ORDER BY eventCount DESC
+       LIMIT 4`
+    );
+
+    res.json({
+      success: true,
+      companies: companies.map(c => ({
+        id: c.id,
+        name: c.company_name,
+        events: `${c.eventCount} Active Events`,
+        image: c.logo_path || "/uploads/default-logo.png"
+      }))
+    });
+  } catch (error) {
+    console.error("Error fetching top companies:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error fetching top companies"
+    });
+  }
+};
