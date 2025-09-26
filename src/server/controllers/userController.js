@@ -124,7 +124,7 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT UserId as id, FirstName as firstName, LastName as lastName, Email as email, Role as role FROM user WHERE UserId = ?',
+      'SELECT UserId as id, FirstName as firstName, LastName as lastName, Email as email, Role as role, ProfilePicture as profilePicture FROM user WHERE UserId = ?',
       [req.user.id]
     );
     const user = users[0];
@@ -153,25 +153,19 @@ const getMe = async (req, res) => {
 const updateMe = async (req, res) => {
   try {
     const { firstName, lastName } = req.body;
-    let profilePic = req.body.profilePic;
+    const profilePicture = req.file ? `/uploads/${req.file.filename}` : undefined;
 
-    // Get current user
-    const [users] = await pool.query(
-      'SELECT * FROM user WHERE UserId = ?',
-      [req.user.id]
-    );
-    const user = users[0];
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    // Build update query dynamically
-    let updates = [];
-    let values = [];
+    const [users] = await pool.query('SELECT * FROM user WHERE UserId = ?', [req.user.id]);
+    const user = users[0];
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const updates = [];
+    const values = [];
 
     if (firstName) {
       updates.push('FirstName = ?');
@@ -181,17 +175,16 @@ const updateMe = async (req, res) => {
       updates.push('LastName = ?');
       values.push(lastName);
     }
-    if (profilePic) {
-      updates.push('ProfilePic = ?');
-      values.push(profilePic);
+    if (profilePicture) {
+      updates.push('ProfilePicture = ?');
+      values.push(profilePicture); 
     }
 
-    if (updates.length === 0) {
+    if (updates.length === 0) 
       return res.status(400).json({
-        success: false,
-        message: 'No fields to update'
-      });
-    }
+      success: false,
+      message: 'No fields to update'
+    });
 
     values.push(req.user.id);
 
@@ -202,17 +195,17 @@ const updateMe = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Profile updated successfully'
+      message: 'Profile updated successfully',
+      data: {
+        firstName: firstName || user.FirstName,
+        lastName: lastName || user.LastName,
+        profilePicture: profilePicture || user.ProfilePicture
+      }
     });
-
-  } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error during profile update'
-    });
+  } catch (err) {
+    console.error("UpdateMe error:", err);
+    res.status(500).json({ success: false, message: 'Server error during profile update' });
   }
-  
 };
 const deleteMe = async (req, res) => {
   try {

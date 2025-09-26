@@ -12,14 +12,14 @@ const {
   requireAnyRole
 } = require('../middleware/authMiddleware');
 
-
-// Configure storage
+const uploadPath = path.join(__dirname, '..', 'uploads');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // make sure this folder exists
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // unique filename
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'profile-' + req.user.id + '-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 const upload = multer({ storage });

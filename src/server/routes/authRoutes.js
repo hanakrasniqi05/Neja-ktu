@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { signup, login } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
-
+const { getMe } = require('../controllers/userController'); // Add this import
 // Debug middleware
 router.post('/signup', (req, res, next) => {
   console.log("POST /signup");
@@ -19,6 +19,8 @@ router.get('/me', protect, (req, res) => {
     data: req.user
   });
 });
+// Use the getMe controller that queries the database
+router.get('/me', protect, getMe);
 
 // Existing profile route
 router.get('/profile', protect, (req, res) => {

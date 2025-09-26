@@ -3,8 +3,7 @@ import React, { useState } from "react";
 export default function EditProfile({ user, onSave }) {
   const [form, setForm] = useState({
     firstName: user?.firstName || "",
-    lastName: user?.lastName || "",
-    profilePic: user?.profilePic || ""
+    lastName: user?.lastName || ""
   });
   const [preview, setPreview] = useState(user?.profilePic || "");
   const [open, setOpen] = useState(false);
@@ -19,35 +18,41 @@ export default function EditProfile({ user, onSave }) {
     const file = e.target.files[0];
     if (file) {
       setPreview(URL.createObjectURL(file));
-      setForm({ ...form, profilePic: `/uploads/${file.name}` });
     }
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch("http://localhost:5000/api/users/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(form)
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        alert("Profile updated!");
-        setOpen(false);
-        onSave && onSave();
-      } else {
-        alert(data.message || "Update failed");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong");
+  e.preventDefault();
+  try {
+    const formData = new FormData();
+    formData.append("firstName", form.firstName);
+    formData.append("lastName", form.lastName);
+    if (e.target.profilePic.files[0]) {
+      formData.append("profilePic", e.target.profilePic.files[0]);
     }
-  };
+
+    const res=await fetch("http://localhost:5000/api/users/me", {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      alert("Profile updated!");
+      setOpen(false);
+      onSave && onSave();
+    } else {
+      alert(data.message || "Update failed");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong");
+  }
+};
+
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to permanently delete your account?")) return;
 
@@ -112,6 +117,7 @@ export default function EditProfile({ user, onSave }) {
                 <label className="block text-sm">Profile Picture</label>
                 <input
                   type="file"
+                  name="profilePic"
                   accept="image/*"
                   onChange={handlePicChange}
                   className="w-full"
