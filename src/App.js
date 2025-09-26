@@ -55,7 +55,14 @@ function App() {
           }
         />
 
-        <Route path="/user-dashboard" element={<UserDashboard />} />
+        <Route
+          path="/user-dashboard"
+          element={
+            <PrivateRoute allowedRoles={['user']}>
+              <UserDashboard />
+            </PrivateRoute>
+          }
+        />
         <Route path="/events/:id" element={<EventDetailsPage />} />
 
         <Route

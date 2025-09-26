@@ -12,13 +12,6 @@ router.post('/signup', (req, res, next) => {
 
 router.post('/login', login);
 
-// Return logged in user ( /me)
-router.get('/me', protect, (req, res) => {
-  res.json({
-    success: true,
-    data: req.user
-  });
-});
 // Use the getMe controller that queries the database
 router.get('/me', protect, getMe);
 
