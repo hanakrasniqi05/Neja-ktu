@@ -33,7 +33,7 @@ export default function PendingRequests() {
       );
 
       // remove company from pending list
-      setCompanies(companies.filter((c) => c.CompanyId !== id));
+      setCompanies(companies.filter((c) => c.id !== id));
     } catch (err) {
       console.error("Error approving company:", err);
     }
@@ -50,7 +50,7 @@ export default function PendingRequests() {
       );
 
       // remove company from pending list
-      setCompanies(companies.filter((c) => c.CompanyId !== id));
+      setCompanies(companies.filter((c) => c.id !== id));
     } catch (err) {
       console.error("Error denying company:", err);
     }
@@ -62,25 +62,29 @@ export default function PendingRequests() {
         <p className="text-gray-500">No pending requests.</p>
       ) : (
         companies.map((company) => (
-          <div key={company.CompanyId} className="bg-white shadow-lg rounded p-4">
+          <div key={company.id} className="bg-white shadow-lg rounded p-4">
             <img
-              src={company.logo_url || "https://via.placeholder.com/64"}
-              alt={company.name}
-              className="w-16 h-16 mb-3"
+              src={company.logo_path || "https://via.placeholder.com/64"}
+              alt={company.company_name}
+              className="w-16 h-16 mb-3 object-cover"
             />
-            <h3 className="font-bold">{company.name}</h3>
-            <p>{company.short_description}</p>
-            <p className="text-sm text-gray-500">Submitted: {company.created_at}</p>
-            <p className="text-sm">Code: {company.company_code}</p>
+            <h3 className="font-bold">{company.company_name}</h3>
+            <p>{company.description}</p>
+            <p className="text-sm text-gray-500">📧 {company.company_email}</p>
+            <p className="text-sm">📞 {company.phone_number}</p>
+            <p className="text-sm">🌍 {company.website}</p>
+            <p className="text-sm">🏢 {company.address}</p>
+            <p className="text-sm"><b>Business Code:{company.business_registration_number}</b></p>
+
             <div className="flex gap-2 mt-4">
               <button
-                onClick={() => handleApprove(company.CompanyId)}
+                onClick={() => handleApprove(company.id)}
                 className="bg-green-500 text-white px-3 py-1 rounded"
               >
                 ✅ Accept
               </button>
               <button
-                onClick={() => handleDeny(company.CompanyId)}
+                onClick={() => handleDeny(company.id)}
                 className="bg-red-500 text-white px-3 py-1 rounded"
               >
                 ❌ Deny
