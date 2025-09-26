@@ -1,7 +1,7 @@
 const pool = require('../database.js');
 const express = require('express');
 const router = express.Router();
-const { protect, requireRole } = require('../middleware/authMiddleware');
+const { protect, requireRole, requireAnyRole} = require('../middleware/authMiddleware');
 
 const {
   createRSVP,
@@ -12,7 +12,7 @@ const {
 } = require('../controllers/rsvpController');
 
 // Add 
-router.post('/', protect, requireRole('user'), createRSVP);
+router.post('/', protect, requireAnyRole('user'), createRSVP);
 
 // Get all 
 router.get('/event/:eventId', getRSVPsByEvent);

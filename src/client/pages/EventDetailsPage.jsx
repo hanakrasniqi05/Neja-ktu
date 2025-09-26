@@ -78,6 +78,13 @@ const EventDetailsPage = () => {
     }
   };
 
+const [role, setRole] = useState(null);
+
+useEffect(() => {
+  const userData = JSON.parse(localStorage.getItem("user"));
+  if (userData) setRole(userData.role); 
+}, []);
+
   const handleRSVP = async () => {
     setRsvpLoading(true);
     try {
@@ -94,8 +101,10 @@ const EventDetailsPage = () => {
       );
 
       alert("RSVP successful!");
+       if (role === "user") {
       navigate("/user-dashboard");
-    } catch (error) {
+      } 
+    }catch (error) {
       console.error("RSVP failed:", error.response?.data || error.message);
       alert("Failed to RSVP. Please try again.");
     } finally {
