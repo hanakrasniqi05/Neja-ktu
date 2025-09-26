@@ -97,11 +97,7 @@ function CompanySignupForm() {
     formDataToSend.append('address', formData.address);
     formDataToSend.append('website', formData.website);
     formDataToSend.append('description', formData.description);
-
-      // Append logo if exists
-      if (logoFile) {
-        formDataToSend.append('logo_path', logoFile);
-      }
+    formDataToSend.append('logo_path', logoFile);
 
       const response = await axios.post('/api/companies/register', formDataToSend, {
         headers: {
