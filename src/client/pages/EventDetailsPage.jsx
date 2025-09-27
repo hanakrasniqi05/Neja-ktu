@@ -111,6 +111,33 @@ useEffect(() => {
       setRsvpLoading(false);
     }
   };
+    const handleInterested = async () => {
+    setRsvpLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("You must be logged in to mark interest");
+        return;
+      }
+
+      await axios.post(
+        "http://localhost:5000/api/rsvp",
+        { event_id: id, status: "interested" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert("Event saved as Interested!");
+      if (role === "user") {
+        navigate("/user-dashboard");
+      }
+    } catch (error) {
+      console.error("Interested action failed:", error.response?.data || error.message);
+      alert("Failed to save interest. Please try again.");
+    } finally {
+      setRsvpLoading(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -168,16 +195,23 @@ useEffect(() => {
         <p className="text-gray-700 whitespace-pre-line mb-6">{event.Description}</p>
 
         {/* RSVP Button */}
-        <div className="mt-6 mb-8">
-          <button
-            onClick={handleRSVP}
-            disabled={rsvpLoading}
-            className="px-6 py-2 bg-yellow-400 text-black rounded-lg font-semibold shadow hover:bg-yellow-500 disabled:opacity-50"
-          >
-            {rsvpLoading ? "Processing..." : "RSVP"}
-          </button>
-        </div>
+       <div className="mt-6 mb-8 flex gap-4">
+        <button
+          onClick={handleRSVP}
+          disabled={rsvpLoading}
+          className="px-6 py-2 bg-yellow-400 text-black rounded-lg font-semibold shadow hover:bg-yellow-500 disabled:opacity-50"
+        >
+          {rsvpLoading ? "Processing..." : "RSVP"}
+        </button>
 
+        <button
+          onClick={handleInterested}
+          disabled={rsvpLoading}
+          className="px-6 py-2 bg-teal-blue text-white rounded-lg font-semibold shadow hover:bg-blue-500 disabled:opacity-50"
+        >
+          {rsvpLoading ? "Processing..." : "Interested"}
+        </button>
+       </div>
         {/* Comments Section */}
         <div className="mt-8 border-t pt-8">
           <h2 className="text-xl font-semibold mb-4">
