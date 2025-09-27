@@ -137,3 +137,30 @@ exports.getRSVPsByUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+// Update RSVP by RSVP ID
+exports.updateRSVPById = async (req, res) => {
+  const { status } = req.body;
+  const rsvpId = req.params.id;
+  const userId = req.user.id; // from JWT
+
+  if (!status) {
+    return res.status(400).json({ success: false, message: 'status is required' });
+  }
+
+  try {
+    const [result] = await pool.query(
+      "UPDATE rsvp SET status = ? WHERE rsvp_id = ? AND user_id = ?",
+      [status, rsvpId, userId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'RSVP not found or not yours' });
+    }
+
+    res.json({ success: true, message: 'RSVP status updated', status });
+  } catch (error) {
+    console.error('UPDATE RSVP BY ID ERROR:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+

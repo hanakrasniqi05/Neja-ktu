@@ -40,7 +40,7 @@ export default function Login() {
         if (userData.verified === false) {
           navigate('/pending-verification');
         } else {
-          navigate('/company/dashboard');
+          navigate('/company-dashboard');
         }
       } else navigate('/user-dashboard');
 

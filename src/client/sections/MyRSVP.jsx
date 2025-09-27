@@ -22,26 +22,42 @@ export default function MyRSVP() {
     fetchRSVPs();
   }, []);
 
+  const handleStatusChange = async (rsvpId, newStatus) => {
+    try {
+      await axios.put(
+        `/api/rsvp/${rsvpId}`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+
+      // update locally so UI changes immediately
+      setRsvps(prev =>
+        prev.map(r => (r.RsvpID === rsvpId ? { ...r, Status: newStatus } : r))
+      );
+    } catch (err) {
+      alert("Could not update RSVP. Please try again.");
+    }
+  };
+
   if (loading) return <p className="p-4">Loading your RSVPs...</p>;
   if (error) return <p className="p-4 text-red-600">{error}</p>;
 
-  // Split into upcoming vs past
   const now = new Date();
   const upcoming = rsvps.filter(r => {
-  const start = new Date(r.StartDateTime);
-  const end = r.EndDateTime ? new Date(r.EndDateTime) : start;
-  return end >= now;
-});
-
-const past = rsvps.filter(r => {
-  const end = r.EndDateTime ? new Date(r.EndDateTime) : new Date(r.StartDateTime);
-  return end < now;
-});
-
+    const start = new Date(r.StartDateTime);
+    const end = r.EndDateTime ? new Date(r.EndDateTime) : start;
+    return end >= now;
+  });
+  const past = rsvps.filter(r => {
+    const end = r.EndDateTime ? new Date(r.EndDateTime) : new Date(r.StartDateTime);
+    return end < now;
+  });
 
   const renderCards = (list, isPast = false) =>
     list.length === 0 ? (
-      <p className="text-gray-600">{isPast ? "No past events." : "No upcoming events."}</p>
+      <p className="text-gray-600">
+        {isPast ? "No past events." : "No upcoming events."}
+      </p>
     ) : (
       <ul className="space-y-6">
         {list.map(rsvp => {
@@ -88,7 +104,16 @@ const past = rsvps.filter(r => {
               </div>
 
               <div className="w-full md:w-44 bg-gray-100 p-6 flex flex-col justify-center text-center">
-                <span className="font-semibold text-gray-800">{rsvp.Status}</span>
+                <select
+                  value={rsvp.Status}
+                  onChange={e => handleStatusChange(rsvp.RsvpID, e.target.value)}
+                  className="border rounded-lg px-2 py-1 text-sm"
+                  disabled={isPast} // prevent changing past RSVPs
+                >
+                  <option value="attending">Attending</option>
+                  <option value="interested">Interested</option>
+                  <option value="not_attending">Not Attending</option>
+                </select>
                 <span className="text-xs text-gray-500 mt-2">
                   RSVP’d on {new Date(rsvp.CreatedAt).toLocaleDateString()}
                 </span>
