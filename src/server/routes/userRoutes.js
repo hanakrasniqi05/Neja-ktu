@@ -77,4 +77,45 @@ router.get('/user/dashboard', requireRole('user'), (req, res) => {
   res.json({ success: true, message: 'Welcome to user dashboard', user: req.user });
 });
 
+router.get('/', adminOnly, async (req, res) => {
+  try {
+    const [users] = await pool.query(
+      `SELECT 
+         UserId as id,
+         FirstName as firstName,
+         LastName as lastName,
+         Email as email,
+         Role as role,
+         ProfilePicture as profilePicture
+       FROM user
+       WHERE Role = 'user'`
+    );
+    res.json({ success: true, data: users });
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Admin: delete a user by id
+router.delete('/:id', adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [result] = await pool.query(
+      'DELETE FROM user WHERE UserId = ? AND Role = "user"',
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'User not found or not deletable' });
+    }
+
+    res.json({ success: true, message: 'User deleted successfully' });
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
 module.exports = router;

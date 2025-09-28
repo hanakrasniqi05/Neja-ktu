@@ -9,9 +9,10 @@ export default function AllUsers() {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get("http://localhost:5000/api/users", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setUsers(res.data.data);
+  headers: { Authorization: `Bearer ${token}` }
+});
+setUsers(res.data.data);
+
       } catch (error) {
         console.error("Error fetching users:", error);
       }
@@ -19,6 +20,21 @@ export default function AllUsers() {
 
     fetchUsers();
   }, []);
+
+  const handleDelete = async (userId) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:5000/api/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUsers(users.filter((user) => user.id !== userId));
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert("Failed to delete user.");
+    }
+  };
 
   return (
     <div className="p-6 w-full">
@@ -49,12 +65,11 @@ export default function AllUsers() {
       <td className="py-2 px-3">{user.email}</td>
       <td className="py-2 px-3 capitalize">{user.role}</td>
       <td className="py-2 px-3 flex gap-2">
-        <button className="bg-teal-blue text-white px-3 py-1 rounded hover:bg-blue">
-          Edit
-        </button>
-        <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-          Delete
-        </button>
+         <button
+                  onClick={() => handleDelete(user.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                  Delete
+                </button>
       </td>
     </tr>
   ))}
