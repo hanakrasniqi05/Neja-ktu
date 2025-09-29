@@ -12,8 +12,10 @@ const eventController = {
           e.StartDateTime,
           e.EndDateTime,
           e.Image,
-          u.ProfilePicture AS companyLogo
+          u.ProfilePicture AS companyLogo,
+          c.company_name AS CompanyName
         FROM events e
+        LEFT JOIN companies c ON e.CompanyID = c.user_id
         LEFT JOIN user u ON e.CompanyID = u.UserId
         WHERE e.EndDateTime > NOW()
         ORDER BY e.StartDateTime ASC
