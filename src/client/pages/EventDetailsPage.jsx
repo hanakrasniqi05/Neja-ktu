@@ -187,8 +187,18 @@ useEffect(() => {
             alt="Organizer"
             className="w-12 h-12 rounded-full mr-3"
           />
-          <p className="text-gray-600">Organized by {event.CompanyName || "Company"}</p>
-        </div>
+        <div>
+          <p className="text-gray-600">
+            Organized by{" "}
+           <span className="font-semibold">
+             {event.company_name || "Unknown Company"}
+           </span>
+          </p>
+          <p className="text-gray-500">
+         📍 {event.Location || "Location not specified"}
+          </p>
+       </div>
+      </div>
 
         {/* Description */}
         <h2 className="text-xl font-semibold mb-2">Description</h2>
@@ -233,7 +243,7 @@ useEffect(() => {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors shadow-md"
+        className="px-6 py-2 bg-teal-blue text-white rounded-lg font-semibold shadow hover:bg-blue-500 disabled:opacity-50"
       >
         {isSubmitting ? (
           <span className="flex items-center">
@@ -248,7 +258,6 @@ useEffect(() => {
     </div>
   </div>
 </form>
-
 
           {/* Comment list */}
           {commentsLoading ? (
