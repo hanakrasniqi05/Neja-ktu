@@ -2,15 +2,7 @@ const express = require("express");
 const router = express.Router();
 const eventController = require("../controllers/eventControllerCompany");
 const { protect, requireRole, verifyCompanyVerified } = require("../middleware/authMiddleware");
-const multer = require("multer");
-const path = require("path");
-
-// Config multer 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
-});
-const upload = multer({ storage });
+const upload = require("../middleware/upload"); 
 
 // Routes 
 router.post("/", protect, requireRole("company"), verifyCompanyVerified, upload.single("image"), eventController.createEvent);
