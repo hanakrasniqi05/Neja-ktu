@@ -68,9 +68,10 @@ const eventController = {
           e.StartDateTime,
           e.EndDateTime,
           e.Image,
-          u.ProfilePicture AS companyLogo
+          c.company_name AS CompanyName,
+          c.logo_path   AS companyLogo
         FROM events e
-        LEFT JOIN user u ON e.CompanyID = u.UserId
+        LEFT JOIN companies c ON e.CompanyID = c.user_id
         WHERE e.EventID = ?
       `, [id]);
 
