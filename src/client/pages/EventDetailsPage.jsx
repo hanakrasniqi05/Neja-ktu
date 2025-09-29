@@ -191,7 +191,7 @@ useEffect(() => {
           <p className="text-gray-600">
             Organized by{" "}
            <span className="font-semibold">
-             {event.company_name || "Unknown Company"}
+             {event.CompanyName || "Unknown Company"}
            </span>
           </p>
           <p className="text-gray-500">
