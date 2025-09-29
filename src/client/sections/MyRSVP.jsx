@@ -9,7 +9,7 @@ export default function MyRSVP() {
   useEffect(() => {
     const fetchRSVPs = async () => {
       try {
-        const res = await axios.get("/api/rsvp/mine", {
+        const res = await axios.get("/api/rsvps/mine", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
         setRsvps(res.data || []);
@@ -25,7 +25,7 @@ export default function MyRSVP() {
   const handleStatusChange = async (rsvpId, newStatus) => {
     try {
       await axios.put(
-        `/api/rsvp/${rsvpId}`,
+        `/api/rsvps/${rsvpId}`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
