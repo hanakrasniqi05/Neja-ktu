@@ -68,7 +68,7 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/event-categories', eventCategoryRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/rsvp', rsvpRoutes)
+app.use('/api/rsvps', rsvpRoutes)
 app.use("/api/company-events", companyEventRoutes);
 
 // 404 handler

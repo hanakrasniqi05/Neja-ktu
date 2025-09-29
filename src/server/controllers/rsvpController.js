@@ -87,16 +87,16 @@ exports.getAllRsvps = async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT 
-        r.RsvpID,
-        r.Status,
-        r.CreatedAt,
-        u.Name AS UserName,
-        u.Email AS UserEmail,
-        e.Title AS EventTitle
-      FROM rsvps r
-      JOIN users u ON r.UserID = u.UserID
-      JOIN events e ON r.EventID = e.EventID
-      ORDER BY r.CreatedAt DESC
+        r.rsvp_id   AS RsvpID,
+        CONCAT(u.FirstName, ' ', u.LastName) AS UserName,
+        u.Email     AS UserEmail,
+        e.Title     AS EventTitle,
+        r.status    AS Status,
+        r.rsvp_date AS CreatedAt
+      FROM rsvp r
+      INNER JOIN user u   ON r.user_id  = u.UserId
+      INNER JOIN events e ON r.event_id = e.EventID
+      ORDER BY r.rsvp_date DESC
     `);
     res.json(rows);
   } catch (error) {

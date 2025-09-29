@@ -1,6 +1,7 @@
 const pool = require('../database.js');
 const express = require('express');
 const router = express.Router();
+const { getAllRsvps } = require('../controllers/rsvpController');
 const { protect, requireRole, requireAnyRole } = require('../middleware/authMiddleware');
 
 const {
@@ -30,4 +31,5 @@ router.put('/:id', protect, requireRole('user'), updateRSVPById);
 // Delete
 router.delete('/', protect, requireRole('user'), deleteRSVP);
 
+router.get('/', getAllRsvps);
 module.exports = router;
