@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import logo from "../assets/logo-pin-b.png";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -16,6 +16,19 @@ export default function SignUp() {
     agreedToTerms: false,
   });
 
+ useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    if (token && userData) {
+      const role = userData.role;
+      if (role === "admin") navigate("/admin-dashboard", { replace: true });
+      else if (role === "company") {
+        if (!userData.verified) navigate("/pending-verification", { replace: true });
+        else navigate("/company-dashboard", { replace: true });
+      } else navigate("/user-dashboard", { replace: true });
+    }
+  }, [navigate]);
+  
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({

@@ -1,18 +1,31 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation  } from "react-router-dom";
 import axios from "axios";
 import { Link } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
-
+  const location = useLocation();
+  const from = location.state?.from?.pathname; // page user came from
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-
   const [error, setError] = useState('');
 
+ useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    if (token && userData) {
+      const role = userData.role;
+      if (role === "admin") navigate("/admin-dashboard", { replace: true });
+      else if (role === "company") {
+        if (!userData.verified) navigate("/pending-verification", { replace: true });
+        else navigate("/company-dashboard", { replace: true });
+      } else navigate("/user-dashboard", { replace: true });
+    }
+  }, [navigate]);
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value.trim() })); 
@@ -34,15 +47,15 @@ export default function Login() {
       localStorage.setItem("userData", JSON.stringify(userData));
 
       const userRole = userData.role;
-      if (userRole === 'admin') navigate('/admin-dashboard');
+      if (userRole === 'admin') navigate(from ||'/admin-dashboard', { replace: true });
       else if (userRole === 'company') {
         // Redirect if company is not verified
         if (userData.verified === false) {
-          navigate('/pending-verification');
+          navigate(from ||'/pending-verification', { replace: true });
         } else {
-          navigate('/company-dashboard');
+          navigate(from ||'/company-dashboard', { replace: true });
         }
-      } else navigate('/user-dashboard');
+      } else navigate(from || '/user-dashboard', { replace: true });
 
     } catch (error) {
       // Show specific message for unverified companies
