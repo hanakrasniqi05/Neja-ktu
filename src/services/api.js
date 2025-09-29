@@ -57,7 +57,7 @@ export const commentAPI = {
   getById: (id) => api.get(`/comments/${id}`),
   update: (id, data) => api.put(`/comments/${id}`, data),
   delete: (id) => api.delete(`/comments/${id}`),
-  getByEvent: (eventId) => api.get(`/comments/${eventId}`),
+  getByEvent: (eventId) => api.get(`/comments/event/${eventId}`),
   getByUser: (userId) => api.get(`/comments/user/${userId}`),
 };
 

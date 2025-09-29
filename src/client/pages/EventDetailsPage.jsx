@@ -30,7 +30,7 @@ const EventDetailsPage = () => {
   const fetchComments = async () => {
     try {
       setCommentsLoading(true);
-      const res = await commentAPI.getById(id); 
+      const res = await commentAPI.getByEvent(id);
       console.log("Fetched comments:", res.data);
       setComments(res.data);
     } catch (error) {
