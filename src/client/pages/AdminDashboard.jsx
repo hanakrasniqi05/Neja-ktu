@@ -7,16 +7,7 @@ import DeniedCompanies from "../sections/DeniedCompanies";
 import AllEvents from "../sections/AllEvents";
 import AllUsers from "../sections/AllUsers";
 import RSVPs from "../sections/RSVPs";
-
-// placeholder per ststistika
-function DashboardStats() {
-  return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">📊 Dashboard Stats</h2>
-      <p>Statistika per faqe, usera, rsvp etj...</p>
-    </div>
-  );
-}
+import AdminStatistics from "../sections/DashboardStats";
 
 export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState("pending");
@@ -39,7 +30,7 @@ export default function AdminDashboard() {
       case "rsvps":
         return <RSVPs />;
       case "dashboard":
-        return <DashboardStats />;
+        return <AdminStatistics />;
       default:
         return <PendingRequests />;
     }
