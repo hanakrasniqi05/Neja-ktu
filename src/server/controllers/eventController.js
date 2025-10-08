@@ -12,8 +12,8 @@ const eventController = {
           e.StartDateTime,
           e.EndDateTime,
           e.Image,
-          u.ProfilePicture AS companyLogo,
-          c.company_name AS CompanyName
+          COALESCE(c.company_name, CONCAT(u.FirstName, ' ', u.LastName)) AS CompanyName,
+          COALESCE(c.logo_path, u.ProfilePicture) AS CompanyLogo
         FROM events e
         LEFT JOIN companies c ON e.CompanyID = c.user_id
         LEFT JOIN user u ON e.CompanyID = u.UserId
@@ -21,10 +21,14 @@ const eventController = {
         ORDER BY e.StartDateTime ASC
       `);
 
+      console.log('Successfully fetched events:', events.length);
       res.json(events);
     } catch (error) {
-      console.error('Error fetching events:', error);
-      res.status(500).json({ error: 'Failed to fetch events' });
+      console.error('Error in simplified events query:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch events',
+        details: error.message 
+      });
     }
   },
 
@@ -40,10 +44,12 @@ const eventController = {
           e.EndDateTime,
           e.Image,
           COUNT(r.RegistrationID) AS popularity,
-          u.ProfilePicture AS companyLogo
+          u.ProfilePicture AS companyLogo,
+          COALESCE(c.company_name, CONCAT(u.FirstName, ' ', u.LastName)) AS CompanyName
         FROM events e
         LEFT JOIN registrations r ON e.EventID = r.EventID
         LEFT JOIN user u ON e.CompanyID = u.UserId
+        LEFT JOIN companies c ON e.CompanyID = c.id
         WHERE e.EndDateTime > NOW()
         GROUP BY e.EventID
         HAVING popularity >= 5
@@ -54,7 +60,10 @@ const eventController = {
       res.json(events);
     } catch (error) {
       console.error('Error fetching popular events:', error);
-      res.status(500).json({ error: 'Failed to fetch popular events' });
+      res.status(500).json({ 
+        error: 'Failed to fetch popular events',
+        details: error.message 
+      });
     }
   },
 
@@ -70,8 +79,8 @@ const eventController = {
           e.StartDateTime,
           e.EndDateTime,
           e.Image,
-          c.company_name AS CompanyName,
-          c.logo_path   AS companyLogo
+          COALESCE(c.company_name, CONCAT(u.FirstName, ' ', u.LastName)) AS CompanyName,
+          COALESCE(c.logo_path, u.ProfilePicture) AS CompanyLogo
         FROM events e
         LEFT JOIN companies c ON e.CompanyID = c.user_id
         WHERE e.EventID = ?
@@ -84,7 +93,10 @@ const eventController = {
       res.json(rows[0]);
     } catch (error) {
       console.error('Error fetching event:', error);
-      res.status(500).json({ error: 'Failed to fetch event' });
+      res.status(500).json({ 
+        error: 'Failed to fetch event',
+        details: error.message 
+      });
     }
   },
 
