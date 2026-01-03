@@ -15,6 +15,7 @@ import UserDashboard from './client/pages/UserDashboard';
 import EventDetailsPage from './client/pages/EventDetailsPage';
 import AdminDashboard from "./client/pages/AdminDashboard";
 import CompanyDashboard from './client/pages/CompanyDashboard'; 
+import './index.css';
 
 function App() {
   return (
