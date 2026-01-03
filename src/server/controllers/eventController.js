@@ -67,38 +67,39 @@ const eventController = {
     }
   },
 
-  getEventById: async (req, res) => {
-    const { id } = req.params;
-    try {
-      const [rows] = await pool.query(`
-        SELECT 
-          e.EventID, 
-          e.Title, 
-          e.Description, 
-          e.Location, 
-          e.StartDateTime,
-          e.EndDateTime,
-          e.Image,
-          COALESCE(c.company_name, CONCAT(u.FirstName, ' ', u.LastName)) AS CompanyName,
-          COALESCE(c.logo_path, u.ProfilePicture) AS CompanyLogo
-        FROM events e
-        LEFT JOIN companies c ON e.CompanyID = c.user_id
-        WHERE e.EventID = ?
-      `, [id]);
+getEventById: async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        e.EventID, 
+        e.Title, 
+        e.Description, 
+        e.Location, 
+        e.StartDateTime,
+        e.EndDateTime,
+        e.Image,
+        COALESCE(c.company_name, CONCAT(u.FirstName, ' ', u.LastName)) AS CompanyName,
+        COALESCE(c.logo_path, u.ProfilePicture) AS CompanyLogo
+      FROM events e
+      LEFT JOIN companies c ON e.CompanyID = c.user_id  -- Join on c.user_id
+      LEFT JOIN user u ON e.CompanyID = u.UserId        -- Join on u.UserId
+      WHERE e.EventID = ?
+    `, [id]);
 
-      if (rows.length === 0) {
-        return res.status(404).json({ error: 'Event not found' });
-      }
-
-      res.json(rows[0]);
-    } catch (error) {
-      console.error('Error fetching event:', error);
-      res.status(500).json({ 
-        error: 'Failed to fetch event',
-        details: error.message 
-      });
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
     }
-  },
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error fetching event:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch event',
+      details: error.message 
+    });
+  }
+},
 
 };
 

@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 
 export default function AllEvents() {
   const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   
   useEffect(() => {

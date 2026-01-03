@@ -14,43 +14,40 @@ const EventDetailsPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rsvpLoading, setRsvpLoading] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Fetch event details
-  const fetchEvent = async () => {
-    try {
-      const res = await eventAPI.getById(id);
-      setEvent(res.data);
-    } catch (error) {
-      console.error('Failed to load event', error);
-    }
-  };
-
-  // Fetch comments with user details
-  const fetchComments = async () => {
-    try {
-      setCommentsLoading(true);
-      const res = await commentAPI.getByEvent(id);
-      console.log("Fetched comments:", res.data);
-      setComments(res.data);
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-    } finally {
-      setCommentsLoading(false);
-    }
-  };
-
-  // Load eventet and comments
+  // Load event and comments
   useEffect(() => {
-    if (id) {
-      const loadData = async () => {
-        setLoading(true);
-        await Promise.all([fetchEvent(), fetchComments()]);
+    const loadData = async () => {
+      if (!id) return;
+      
+      setLoading(true);
+      setError(null);
+      setEvent(null);
+      setComments([]);
+      
+      try {
+        // Fetch event
+        const eventRes = await eventAPI.getById(id);
+        setEvent(eventRes.data);
+        
+        // Fetch comments
+        setCommentsLoading(true);
+        const commentsRes = await commentAPI.getByEvent(id);
+        setComments(commentsRes.data);
+        setCommentsLoading(false);
+        
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError('Failed to load event data');
+      } finally {
         setLoading(false);
-      };
-      loadData();
-    }
-  }, [id]);
+      }
+    };
+
+    loadData();
+  }, [id]); // Only depend on id
 
   const handleAddComment = async (e) => {
     e.preventDefault();
@@ -65,8 +62,8 @@ const EventDetailsPage = () => {
       }
 
   const res = await commentAPI.create(
-  { eventId: id, content: newComment },
-  { headers: { Authorization: `Bearer ${token}` } }
+ { eventId: id, content: newComment },
+ { headers: { Authorization: `Bearer ${token}` } }
 );
     setComments((prev) => [res.data, ...prev]);
       setNewComment("");
@@ -138,12 +135,37 @@ useEffect(() => {
     }
   };
 
-
   if (loading) {
     return (
       <>
         <Header />
-        <p className="text-center mt-10">Loading event...</p>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading event...</p>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Header />
+        <div className="max-w-4xl mx-auto p-6 min-h-screen">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-10">
+            <h2 className="text-lg font-semibold text-red-800">Error</h2>
+            <p className="text-red-600 mt-2">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
         <Footer />
       </>
     );
@@ -153,7 +175,17 @@ useEffect(() => {
     return (
       <>
         <Header />
-        <p className="text-center mt-10 text-red-500">Event not found.</p>
+        <div className="max-w-4xl mx-auto p-6 min-h-screen">
+          <div className="text-center mt-10">
+            <p className="text-red-500 text-xl mb-4">Event not found.</p>
+            <button 
+              onClick={() => navigate(-1)} 
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
         <Footer />
       </>
     );
@@ -183,7 +215,7 @@ useEffect(() => {
         {/* Organizer */}
         <div className="flex items-center mb-4">
           <img
-            src={event.companyLogo || '/default-company.png'}
+            src={event.CompanyLogo || event.companyLogo || '/default-company.png'}
             alt="Organizer"
             className="w-12 h-12 rounded-full mr-3"
           />
@@ -205,23 +237,24 @@ useEffect(() => {
         <p className="text-gray-700 whitespace-pre-line mb-6">{event.Description}</p>
 
         {/* RSVP Button */}
-       <div className="mt-6 mb-8 flex gap-4">
-        <button
-          onClick={handleRSVP}
-          disabled={rsvpLoading}
-          className="px-6 py-2 bg-yellow-400 text-black rounded-lg font-semibold shadow hover:bg-yellow-500 disabled:opacity-50"
-        >
-          {rsvpLoading ? "Processing..." : "RSVP"}
-        </button>
+        <div className="mt-6 mb-8 flex gap-4">
+          <button
+            onClick={handleRSVP}
+            disabled={rsvpLoading}
+            className="px-6 py-2 bg-yellow-400 text-black rounded-lg font-semibold shadow hover:bg-yellow-500 disabled:opacity-50"
+          >
+            {rsvpLoading ? "Processing..." : "RSVP"}
+          </button>
 
-        <button
-          onClick={handleInterested}
-          disabled={rsvpLoading}
-          className="px-6 py-2 bg-teal-blue text-white rounded-lg font-semibold shadow hover:bg-blue-500 disabled:opacity-50"
-        >
-          {rsvpLoading ? "Processing..." : "Interested"}
-        </button>
-       </div>
+          <button
+            onClick={handleInterested}
+            disabled={rsvpLoading}
+            className="px-6 py-2 bg-teal-blue text-white rounded-lg font-semibold shadow hover:bg-blue-500 disabled:opacity-50"
+          >
+            {rsvpLoading ? "Processing..." : "Interested"}
+          </button>
+        </div>
+
         {/* Comments Section */}
         <div className="mt-8 border-t pt-8">
           <h2 className="text-xl font-semibold mb-4">
@@ -229,35 +262,35 @@ useEffect(() => {
           </h2>
 
           {/* Add comment form */}
-<form onSubmit={handleAddComment} className="mb-6">
-  <div className="relative">
-    <textarea
-      value={newComment}
-      onChange={(e) => setNewComment(e.target.value)}
-      placeholder="Write a comment..."
-      className="w-full border rounded p-3 pr-24 focus:ring-2 focus:ring-blue-300 focus:border-blue-300 resize-vertical"
-      rows={3}
-    />
-    {/* Button */}
-    <div className="absolute bottom-3 right-3 z-10">
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="px-6 py-2 bg-teal-blue text-white rounded-lg font-semibold shadow hover:bg-blue-500 disabled:opacity-50"
-      >
-        {isSubmitting ? (
-          <span className="flex items-center">
-            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Posting
-          </span>
-        ) : "Post"}
-      </button>
-    </div>
-  </div>
-</form>
+         <form onSubmit={handleAddComment} className="mb-6">
+            <div className="relative">
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Write a comment..."
+                className="w-full border rounded p-3 pr-24 focus:ring-2 focus:ring-blue-300 focus:border-blue-300 resize-vertical"
+                rows={3}
+              />
+              {/* Button */}
+              <div className="absolute bottom-3 right-3 z-10">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-6 py-2 bg-teal-blue text-white rounded-lg font-semibold shadow hover:bg-blue-500 disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Posting
+                    </span>
+                  ) : "Post"}
+                </button>
+              </div>
+            </div>
+          </form>
 
           {/* Comment list */}
           {commentsLoading ? (
