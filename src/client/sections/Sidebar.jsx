@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logopin.png"; 
 import { 
-  Building2, Users, CalendarDays, AlertCircle, BarChart3, 
+  Building2, Users, CalendarDays, BarChart3, 
   CheckCircle2, XCircle, Clock 
 } from "lucide-react";
 

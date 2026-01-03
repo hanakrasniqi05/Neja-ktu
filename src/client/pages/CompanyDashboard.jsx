@@ -6,10 +6,13 @@ import MyEvents from "../sections/CDMyEvents";
 import CreateEvent from "../sections/CDCreateEvent";
 import AccountSettings from "../sections/CDAccountSettings";
 
+import { companyEventAPI } from "../../services/api";
 
 export default function CompanyDashboard() {
   const [activePage, setActivePage] = useState("myEvents");
   const [events, setEvents] = useState([]);
+  
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchEvents();
@@ -17,55 +20,51 @@ export default function CompanyDashboard() {
 
   const fetchEvents = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/company/events", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+    
+      setError("");
+      const res = await companyEventAPI.getMyEvents();
       setEvents(res.data);
     } catch (err) {
-      console.error(err);
-    }
+      console.error("Error fetching events:", err);
+      setError("Failed to load events");
+    } 
   };
 
   const handleCreate = async (formData) => {
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/company/events",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const res = await companyEventAPI.createEvent(formData);
       setEvents([res.data, ...events]);
       setActivePage("myEvents");
+      alert("Event created successfully!");
     } catch (err) {
-      console.error(err);
+      console.error("Error creating event:", err);
+      alert("Failed to create event");
     }
   };
 
   const handleUpdate = async (id, formData) => {
     try {
-      const res = await axios.put(
-        `http://localhost:5000/api/company/events/${id}`,
-        formData,
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-      );
+      const res = await companyEventAPI.updateEvent(id, formData);
       setEvents(events.map(ev => ev.EventID === id ? res.data : ev));
+      alert("Event updated successfully!");
     } catch (err) {
-      console.error(err);
+      console.error("Error updating event:", err);
+      alert("Failed to update event");
     }
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this event?")) {
+      return;
+    }
+
     try {
-      await axios.delete(`http://localhost:5000/api/company/events/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      await companyEventAPI.deleteEvent(id);
       setEvents(events.filter(e => e.EventID !== id));
+      alert("Event deleted successfully!");
     } catch (err) {
-      console.error(err);
+      console.error("Error deleting event:", err);
+      alert("Failed to delete event");
     }
   };
 
@@ -111,8 +110,25 @@ export default function CompanyDashboard() {
         </nav>
       </aside>
       <main className="flex-1 p-10 bg-white">
+        
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+            <button 
+              onClick={fetchEvents}
+              className="ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {activePage === "myEvents" && (
-          <MyEvents events={events} onDelete={handleDelete} onUpdate={handleUpdate} />
+          <MyEvents 
+            events={events} 
+            onDelete={handleDelete} 
+            onUpdate={handleUpdate} 
+          />
         )}
         {activePage === "createEvent" && <CreateEvent onCreate={handleCreate} />}
         {activePage === "settings" && <AccountSettings />}

@@ -83,4 +83,11 @@ export const eventCategoryAPI = {
   deleteCategory: (id) => api.delete(`/event-categories/categories/${id}`),
 };
 
+export const companyEventAPI = {
+  getMyEvents: () => api.get('/company-events/my-events'),
+  createEvent: (data) => api.post('/company-events', data),
+  updateEvent: (id, data) => api.put(`/company-events/${id}`, data),
+  deleteEvent: (id) => api.delete(`/company-events/${id}`)
+};
+
 export default api;

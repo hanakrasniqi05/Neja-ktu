@@ -285,13 +285,21 @@ function CompanySignupForm() {
                   className="mr-2 accent-[#60A5FA]"
                 />
                 I agree to the
-                <a href="#" className="underline mx-1 text-[#2563EB]">
+                <button 
+                  type="button" 
+                  onClick={() => navigate('/terms')} 
+                  className="underline mx-1 text-[#2563EB] bg-transparent border-none p-0 cursor-pointer"
+                >
                   Terms of Service
-                </a>
+                </button>
                 and 
-                <a href="#" className="underline ml-1 text-[#2563EB]">
+                <button 
+                  type="button" 
+                  onClick={() => navigate('/privacy')} 
+                  className="underline ml-1 text-[#2563EB] bg-transparent border-none p-0 cursor-pointer"
+                >
                   Privacy Policy
-                </a>
+                </button>
               </label>
               {errors.agreedToTerms && <p className="text-red-500 text-sm mt-1">{errors.agreedToTerms}</p>}
             </div>
