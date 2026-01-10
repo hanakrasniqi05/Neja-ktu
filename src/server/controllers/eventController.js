@@ -17,7 +17,6 @@ const eventController = {
         FROM events e
         LEFT JOIN companies c ON e.CompanyID = c.user_id
         LEFT JOIN user u ON e.CompanyID = u.UserId
-        WHERE e.EndDateTime > NOW()
         ORDER BY e.StartDateTime ASC
       `);
 
@@ -49,7 +48,7 @@ const eventController = {
         FROM events e
         LEFT JOIN registrations r ON e.EventID = r.EventID
         LEFT JOIN user u ON e.CompanyID = u.UserId
-        LEFT JOIN companies c ON e.CompanyID = c.id
+        LEFT JOIN companies c ON e.CompanyID = c.user_id
         WHERE e.EndDateTime > NOW()
         GROUP BY e.EventID
         HAVING popularity >= 5
