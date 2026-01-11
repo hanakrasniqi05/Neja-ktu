@@ -275,7 +275,7 @@ export default function AdminStatistics() {
       </div>
 
       {/* Key Metrics Grid - Responsive */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
         <StatCard
           title="Total Events"
           value={stats.totalEvents}
@@ -298,7 +298,7 @@ export default function AdminStatistics() {
           icon={Award}
           color="teal-blue"
           subtitle="Events with >20 RSVPs"
-          className="col-span-2 lg:col-span-1"
+          className="sm:col-span-2 lg:col-span-1"
         />
         
         <StatCard
@@ -307,7 +307,7 @@ export default function AdminStatistics() {
           icon={Users}
           color="dark-blue"
           subtitle="Per event"
-          className="col-span-2 lg:col-span-1"
+          className="sm:col-span-2 lg:col-span-1"
         />
       </div>
 
