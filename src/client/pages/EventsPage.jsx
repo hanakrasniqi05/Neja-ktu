@@ -27,6 +27,7 @@ const EventsPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasNoEventsForSelection, setHasNoEventsForSelection] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -140,14 +141,35 @@ const EventsPage = () => {
 
   const showAllEvents = () => {
     setSelectedCategories(['All']);
+    setSearchTerm('');
     setHasNoEventsForSelection(false);
   };
+
+  // Filter events based on search term
+const filteredEvents = events.filter(event =>
+  (event.EventName && event.EventName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+  (event.Description && event.Description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+  (event.Location && event.Location.toLowerCase().includes(searchTerm.toLowerCase()))
+);
+
 
   return (
     <>
       <Header />
-      <div className="relative bg-blue-50 shadow-md">
-        <div className="w-full overflow-x-auto px-6 py-4">
+      <div className="p-6 bg-blue-50 shadow-md">
+        {/* Search Bar */}
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Search events..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full max-w-md px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+
+        {/* Category Buttons */}
+        <div className="overflow-x-auto">
           <div className="flex space-x-4 min-w-max">
             {getOrderedCategories().map(({ label, icon, hasEvents }) => (
               <button
@@ -174,10 +196,10 @@ const EventsPage = () => {
           <div className="w-full text-center py-12">
             <p className="text-gray-500 text-lg">Loading events...</p>
           </div>
-        ) : hasNoEventsForSelection ? (
+        ) : hasNoEventsForSelection || filteredEvents.length === 0 ? (
           <div className="w-full text-center py-12">
-            <p className="text-gray-500 text-lg mb-4">No events found for the selected categories</p>
-            <p className="text-gray-500 mb-6">Try selecting different categories or</p>
+            <p className="text-gray-500 text-lg mb-4">No events found</p>
+            <p className="text-gray-500 mb-6">Try searching something else or</p>
             <button
               onClick={showAllEvents}
               className="px-6 py-2 bg-light-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -185,18 +207,8 @@ const EventsPage = () => {
               Show All Events
             </button>
           </div>
-        ) : events.length === 0 ? (
-          <div className="w-full text-center py-12">
-            <p className="text-gray-500 text-lg mb-4">No events available</p>
-            <button
-              onClick={showAllEvents}
-              className="px-6 py-2 bg-light-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Refresh Events
-            </button>
-          </div>
         ) : (
-          events.map(event => (
+          filteredEvents.map(event => (
             <div key={event.EventID} className="w-[22%] min-w-[250px]">
               <EventCard event={event} />
             </div>
