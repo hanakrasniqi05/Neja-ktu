@@ -12,9 +12,16 @@ exports.getCategories = async (req, res) => {
 exports.getEvents = async (req, res) => {
   try {
     const { category } = req.query;
-    const events = category 
-      ? await EventCategory.getEventsByCategory(category)
-      : await EventCategory.getAllEvents();
+
+    if (!category) {
+      const events = await EventCategory.getAllEvents();
+      return res.json(events);
+    }
+
+    // category=1,2,3 → [1,2,3]
+    const categoryIds = category.split(',').map(Number);
+
+    const events = await EventCategory.getEventsByCategories(categoryIds);
     res.json(events);
   } catch (error) {
     res.status(500).json({ error: error.message });

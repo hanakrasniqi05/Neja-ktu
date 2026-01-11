@@ -8,126 +8,201 @@ import Footer from '../components/Footer.jsx';
 import EventCard from '../components/EventCard.jsx';
 import { eventCategoryAPI } from '../../services/api';
 
-const allCategories = [
-  { label: 'All', icon: <Star size={16} />, id: null },
-  { label: 'Music', icon: <Music size={16} />, id: 1 },
-  { label: 'Culture', icon: <Globe size={16} />, id: 2 },
-  { label: 'Health', icon: <HeartPulse size={16} />, id: 3 },
-  { label: 'Tech', icon: <Cpu size={16} />, id: 4 },
-  { label: 'Business', icon: <Briefcase size={16} />, id: 5 },
-  { label: 'Sports', icon: <Dumbbell size={16} />, id: 6 },
-  { label: 'Art', icon: <Palette size={16} />, id: 7 },
-  { label: 'Education', icon: <GraduationCap size={16} />, id: 8 },
-  { label: 'Food', icon: <UtensilsCrossed size={16} />, id: 9 },
-];
+const categoryIcons = {
+  'Music': <Music size={16} />,
+  'Culture': <Globe size={16} />,
+  'Health': <HeartPulse size={16} />,
+  'Tech': <Cpu size={16} />,
+  'Business': <Briefcase size={16} />,
+  'Sports': <Dumbbell size={16} />,
+  'Art': <Palette size={16} />,
+  'Education': <GraduationCap size={16} />,
+  'Food': <UtensilsCrossed size={16} />,
+  'All': <Star size={16} />
+};
 
 const EventsPage = () => {
   const [selectedCategories, setSelectedCategories] = useState(['All']);
   const [events, setEvents] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hasNoEventsForSelection, setHasNoEventsForSelection] = useState(false);
 
-  const fetchEvents = async (categories) => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const categoriesResponse = await eventCategoryAPI.getAllCategories();
+        const eventsResponse = await eventCategoryAPI.getAllEvents();
+
+        // Count events per category
+        const stats = {};
+        eventsResponse.data.forEach(event => {
+          if (event.categories) {
+            event.categories.split(',').forEach(catName => {
+              const trimmedCat = catName.trim();
+              stats[trimmedCat] = (stats[trimmedCat] || 0) + 1;
+            });
+          }
+        });
+
+        // Build categories list
+        const allCategoriesList = categoriesResponse.data.map(cat => ({
+          label: cat.Name,
+          id: cat.CategoryID,
+          icon: categoryIcons[cat.Name] || <Star size={16} />,
+          eventCount: stats[cat.Name] || 0,
+          hasEvents: (stats[cat.Name] || 0) > 0
+        }));
+
+        allCategoriesList.sort((a, b) => {
+          if (a.hasEvents !== b.hasEvents) return b.hasEvents - a.hasEvents;
+          return a.label.localeCompare(b.label);
+        });
+
+        allCategoriesList.unshift({
+          label: 'All',
+          id: null,
+          icon: <Star size={16} />,
+          eventCount: eventsResponse.data.length,
+          hasEvents: eventsResponse.data.length > 0
+        });
+
+        setCategories(allCategoriesList);
+        setEvents(eventsResponse.data);
+      } catch (error) {
+        setCategories([]);
+        setEvents([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const fetchEvents = async (selectedCats) => {
     setLoading(true);
+    setHasNoEventsForSelection(false);
+
     try {
       let response;
 
-      if (categories.includes('All') || categories.length === allCategories.length - 1) {
+      if (selectedCats.includes('All')) {
         response = await eventCategoryAPI.getAllEvents();
       } else {
-        const categoryIds = categories
-          .map(label => {
-            const category = allCategories.find(cat => cat.label === label);
-            return category?.id;
-          })
-          .filter(id => id !== null);
+        const categoryIds = selectedCats
+          .map(catName => categories.find(c => c.label === catName)?.id)
+          .filter(Boolean);
 
-        response = await eventCategoryAPI.getEventsByCategories(categoryIds);
+        if (categoryIds.length > 0) {
+          const categoryQueryString = categoryIds.join(',');
+          response = await eventCategoryAPI.getEventsByCategory(categoryQueryString);
+        } else {
+          response = await eventCategoryAPI.getAllEvents();
+        }
       }
 
       setEvents(response.data);
+      if (response.data.length === 0) setHasNoEventsForSelection(true);
     } catch (error) {
-      console.error('Failed to fetch events:', error);
       setEvents([]);
+      setHasNoEventsForSelection(true);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchEvents(selectedCategories);
-  }, [selectedCategories]);
+    if (categories.length > 0 && selectedCategories.length > 0) {
+      fetchEvents(selectedCategories);
+    }
+  }, [selectedCategories, categories]);
 
   const handleCategoryClick = (label) => {
     setSelectedCategories(prev => {
-      if (label === 'All') {
-        return ['All'];
-      }
+      if (label === 'All') return ['All'];
 
       if (prev.includes(label)) {
-        const newSelection = prev.filter(cat => cat !== label);
-        return newSelection.length === 0 ? ['All'] : newSelection;
+        const filtered = prev.filter(c => c !== label);
+        return filtered.length ? filtered : ['All'];
       }
 
-      const newSelection = prev.includes('All')
-        ? [label]
-        : [...prev, label];
-
-      if (newSelection.length === allCategories.length - 1) {
-        return ['All'];
-      }
-
-      return newSelection;
+      return prev.includes('All') ? [label] : [...prev, label];
     });
   };
 
   const getOrderedCategories = () => {
-    const all = allCategories.find(c => c.label === 'All');
-    const selected = allCategories.filter(c =>
-      c.label !== 'All' && selectedCategories.includes(c.label)
-    );
-    const unselected = allCategories.filter(c =>
-      c.label !== 'All' && !selectedCategories.includes(c.label)
-    );
+    const allCat = categories.find(c => c.label === 'All');
+    const others = categories.filter(c => c.label !== 'All')
+      .sort((a, b) => selectedCategories.includes(b.label) - selectedCategories.includes(a.label));
+    return [allCat, ...others].filter(Boolean);
+  };
 
-    return [all, ...selected, ...unselected];
+  const showAllEvents = () => {
+    setSelectedCategories(['All']);
+    setHasNoEventsForSelection(false);
   };
 
   return (
     <>
       <Header />
-      <div className="w-full overflow-x-auto px-6 py-4 bg-blue-50 shadow-md sticky top-0 z-10">
-        <div className="flex space-x-4 min-w-max">
-          {getOrderedCategories().map(({ label, icon }) => (
-            <button
-              key={label}
-              onClick={() => handleCategoryClick(label)}
-              className={`flex items-center space-x-2 px-5 py-2.5 rounded-full border-2 text-sm font-medium transition-all
-                ${selectedCategories.includes(label)
-                  ? 'bg-light-blue text-white border-blue-600'
-                  : 'bg-white text-gray-800 hover:text-white border-gray-300 hover:bg-light-blue'}
-              `}
-            >
-              {icon}
-              <span>{label}</span>
-            </button>
-          ))}
+      <div className="relative bg-blue-50 shadow-md">
+        <div className="w-full overflow-x-auto px-6 py-4">
+          <div className="flex space-x-4 min-w-max">
+            {getOrderedCategories().map(({ label, icon, hasEvents }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => handleCategoryClick(label)}
+                className={`flex items-center space-x-2 px-5 py-2.5 rounded-full border-2 text-sm font-medium transition-all
+                  ${selectedCategories.includes(label)
+                    ? 'bg-light-blue text-white border-blue-600'
+                    : 'bg-white text-gray-800 border-gray-300 hover:bg-blue-50'}
+                  ${!hasEvents && label !== 'All' ? 'opacity-60' : ''}`}
+                title={!hasEvents && label !== 'All' ? `No events in ${label} category yet` : ''}
+              >
+                {icon}
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       <main className="flex flex-wrap justify-center gap-4 p-4 w-full box-border">
         {loading ? (
-          <p className="text-center text-gray-500">Loading events...</p>
+          <div className="w-full text-center py-12">
+            <p className="text-gray-500 text-lg">Loading events...</p>
+          </div>
+        ) : hasNoEventsForSelection ? (
+          <div className="w-full text-center py-12">
+            <p className="text-gray-500 text-lg mb-4">No events found for the selected categories</p>
+            <p className="text-gray-500 mb-6">Try selecting different categories or</p>
+            <button
+              onClick={showAllEvents}
+              className="px-6 py-2 bg-light-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Show All Events
+            </button>
+          </div>
         ) : events.length === 0 ? (
-          <p className="text-center text-gray-500">No events found.</p>
+          <div className="w-full text-center py-12">
+            <p className="text-gray-500 text-lg mb-4">No events available</p>
+            <button
+              onClick={showAllEvents}
+              className="px-6 py-2 bg-light-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Refresh Events
+            </button>
+          </div>
         ) : (
-          events.map((event, index) => (
-            <div key={event.EventID || index} className="w-[22%] min-w-[250px]">
+          events.map(event => (
+            <div key={event.EventID} className="w-[22%] min-w-[250px]">
               <EventCard event={event} />
             </div>
           ))
         )}
       </main>
-
       <Footer />
     </>
   );
