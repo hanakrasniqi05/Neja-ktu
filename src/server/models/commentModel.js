@@ -10,14 +10,21 @@ async function addComment(eventId, userId, content) {
 
 async function getCommentsByEvent(eventId) {
     const [rows] = await db.execute(
-        `SELECT c.CommentID, c.Content, c.CreatedAt, u.FirstName, u.LastName
-         FROM comments c
-         JOIN user u ON c.UserID = u.UserId
-         WHERE c.EventID = ?
-         ORDER BY c.CreatedAt DESC`,
-        [eventId]
-    );
-    return rows;
+        `SELECT 
+        c.CommentID,
+        c.Content,
+        c.CreatedAt,
+        u.UserId,
+        u.FirstName,
+        u.LastName,
+        u.ProfilePicture
+      FROM comments c
+      JOIN user u ON c.UserID = u.UserId
+      WHERE c.EventID = ?
+      ORDER BY c.CreatedAt DESC`,
+     [eventId]
+  );
+  return rows;
 }
 
 async function deleteComment(commentId, userId) {

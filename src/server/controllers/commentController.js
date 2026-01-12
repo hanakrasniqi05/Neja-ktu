@@ -12,10 +12,19 @@ exports.createComment = async (req, res) => {
   try {
     const commentId = await Comment.addComment(eventId, userId, content);
     const [rows] = await db.execute(
-      `SELECT c.CommentID, c.Content, c.CreatedAt, u.FirstName, u.LastName
-       FROM comments c
-       JOIN user u ON c.UserID = u.UserId
-       WHERE c.CommentID = ?`,
+      `
+      SELECT 
+        c.CommentID,
+        c.Content,
+        c.CreatedAt,
+        u.UserId,
+        u.FirstName,
+        u.LastName,
+        u.ProfilePicture
+      FROM comments c
+      JOIN user u ON c.UserID = u.UserId
+      WHERE c.CommentID = ?
+      `,
       [commentId]
     );
 

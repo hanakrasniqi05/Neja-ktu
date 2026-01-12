@@ -303,9 +303,13 @@ useEffect(() => {
                 <div key={comment.CommentID || comment.id} className="bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center mb-2">
                     <img
-                      src={comment.ProfilePic || comment.profilePicture || "/default-user.png"}
-                      alt="User"
-                      className="w-8 h-8 rounded-full mr-2"
+                      src={
+                      comment.ProfilePicture
+                      ? `http://localhost:5000/${comment.ProfilePicture.replace(/^\/+/, '')}`
+                      : '/default-user.png'
+                    }
+                    alt="User avatar"
+                     className="w-10 h-10 rounded-full object-cover mr-3 flex-shrink-0"
                     />
                     <div>
                       <p className="font-medium">

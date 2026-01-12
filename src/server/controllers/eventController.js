@@ -42,14 +42,13 @@ const eventController = {
           e.StartDateTime,
           e.EndDateTime,
           e.Image,
-          COUNT(r.RegistrationID) AS popularity,
-          u.ProfilePicture AS companyLogo,
-          COALESCE(c.company_name, CONCAT(u.FirstName, ' ', u.LastName)) AS CompanyName
+          ANY_VALUE(u.ProfilePicture) AS companyLogo,
+          ANY_VALUE(COALESCE(c.company_name, CONCAT(u.FirstName, ' ', u.LastName))) AS CompanyName,
+          COUNT(r.RegistrationID) AS popularity
         FROM events e
         LEFT JOIN registrations r ON e.EventID = r.EventID
         LEFT JOIN user u ON e.CompanyID = u.UserId
         LEFT JOIN companies c ON e.CompanyID = c.user_id
-        WHERE e.EndDateTime > NOW()
         GROUP BY e.EventID
         HAVING popularity >= 5
         ORDER BY popularity DESC
