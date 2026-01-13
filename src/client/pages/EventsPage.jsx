@@ -24,6 +24,7 @@ const categoryIcons = {
 const EventsPage = () => {
   const [selectedCategories, setSelectedCategories] = useState(['All']);
   const [events, setEvents] = useState([]);
+  const [allEvents, setAllEvents] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasNoEventsForSelection, setHasNoEventsForSelection] = useState(false);
@@ -34,10 +35,12 @@ const EventsPage = () => {
       try {
         const categoriesResponse = await eventCategoryAPI.getAllCategories();
         const eventsResponse = await eventCategoryAPI.getAllEvents();
+        const allEventsData = eventsResponse.data || eventsResponse || [];
+        setAllEvents(allEventsData);
 
         // Count events per category
         const stats = {};
-        eventsResponse.data.forEach(event => {
+        allEventsData.forEach(event => {
           if (event.categories) {
             event.categories.split(',').forEach(catName => {
               const trimmedCat = catName.trim();
@@ -64,15 +67,17 @@ const EventsPage = () => {
           label: 'All',
           id: null,
           icon: <Star size={16} />,
-          eventCount: eventsResponse.data.length,
-          hasEvents: eventsResponse.data.length > 0
+          eventCount: allEventsData.length,
+          hasEvents: allEventsData.length > 0
         });
 
         setCategories(allCategoriesList);
-        setEvents(eventsResponse.data);
+        setEvents(allEventsData);
       } catch (error) {
+        console.error('Error fetching data:', error);
         setCategories([]);
         setEvents([]);
+        setAllEvents([]);
       } finally {
         setLoading(false);
       }
@@ -106,6 +111,7 @@ const EventsPage = () => {
       setEvents(response.data);
       if (response.data.length === 0) setHasNoEventsForSelection(true);
     } catch (error) {
+      console.error('Error fetching events:', error);
       setEvents([]);
       setHasNoEventsForSelection(true);
     } finally {
@@ -114,7 +120,7 @@ const EventsPage = () => {
   };
 
   useEffect(() => {
-    if (categories.length > 0 && selectedCategories.length > 0) {
+    if (categories.length > 0 && selectedCategories.length > 0 && !searchTerm.trim()) {
       fetchEvents(selectedCategories);
     }
   }, [selectedCategories, categories]);
@@ -146,12 +152,25 @@ const EventsPage = () => {
   };
 
   // Filter events based on search term
-const filteredEvents = events.filter(event =>
-  (event.EventName && event.EventName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-  (event.Description && event.Description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-  (event.Location && event.Location.toLowerCase().includes(searchTerm.toLowerCase()))
-);
+  const getFilteredEvents = () => {
+    if (!searchTerm.trim()) {
+      return events;
+    }
+    
+    const term = searchTerm.toLowerCase().trim();
+    return allEvents.filter(event => {
+      const eventTitle = event.Title || event.EventName || '';
+      const location = event.Location || '';
+      const categories = event.categories || '';
+      return (
+        eventTitle.toLowerCase().includes(term) ||
+        location.toLowerCase().includes(term) ||
+        categories.toLowerCase().includes(term)
+      );
+    });
+  };
 
+  const filteredEvents = getFilteredEvents();
 
   return (
     <>
@@ -161,7 +180,7 @@ const filteredEvents = events.filter(event =>
         <div className="mb-4">
           <input
             type="text"
-            placeholder="Search events..."
+            placeholder="Search events by title, location, or category..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="w-full max-w-md px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -192,13 +211,15 @@ const filteredEvents = events.filter(event =>
       </div>
 
       <main className="flex flex-wrap justify-center gap-4 p-4 w-full box-border">
-        {loading ? (
+        {loading && !searchTerm.trim() ? (
           <div className="w-full text-center py-12">
             <p className="text-gray-500 text-lg">Loading events...</p>
           </div>
-        ) : hasNoEventsForSelection || filteredEvents.length === 0 ? (
+        ) : filteredEvents.length === 0 ? (
           <div className="w-full text-center py-12">
-            <p className="text-gray-500 text-lg mb-4">No events found</p>
+            <p className="text-gray-500 text-lg mb-4">
+              {searchTerm.trim() ? `No events found for "${searchTerm}"` : 'No events found'}
+            </p>
             <p className="text-gray-500 mb-6">Try searching something else or</p>
             <button
               onClick={showAllEvents}
@@ -209,7 +230,7 @@ const filteredEvents = events.filter(event =>
           </div>
         ) : (
           filteredEvents.map(event => (
-            <div key={event.EventID} className="w-[22%] min-w-[250px]">
+            <div key={event.EventID || event.id} className="w-[22%] min-w-[250px]">
               <EventCard event={event} />
             </div>
           ))

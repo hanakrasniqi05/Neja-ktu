@@ -209,7 +209,7 @@ exports.getTopCompanies = async (req, res) => {
           COUNT(e.EventID) AS eventCount
        FROM companies c
        LEFT JOIN user u ON c.user_id = u.UserId
-       LEFT JOIN events e ON e.CompanyID = u.UserId
+       LEFT JOIN events e ON e.company_id = u.UserId
        WHERE c.verification_status = 'verified'
        GROUP BY c.id, c.company_name, c.logo_path
        ORDER BY eventCount DESC
