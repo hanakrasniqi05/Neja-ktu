@@ -9,9 +9,6 @@ class EventCategory {
 static async getEventsByCategories(categoryIds) {
   const placeholders = categoryIds.map(() => '?').join(',');
 
-  console.log('Looking for events with category IDs:', categoryIds);
-
-  // Simplified query that handles only_full_group_by
   const [rows] = await db.query(`
     SELECT 
       e.*,
@@ -24,8 +21,8 @@ static async getEventsByCategories(categoryIds) {
         WHERE ec.EventID = e.EventID
       ) AS categories
     FROM events e
-    LEFT JOIN companies cmp ON e.company_id  = cmp.user_id
-    LEFT JOIN user u ON e.company_id  = u.UserId
+    LEFT JOIN companies cmp ON e.company_id = cmp.id
+    LEFT JOIN user u ON e.company_id = u.UserId
     WHERE e.EventID IN (
       SELECT DISTINCT EventID
       FROM event_categories
@@ -34,10 +31,9 @@ static async getEventsByCategories(categoryIds) {
     ORDER BY e.StartDateTime ASC
   `, categoryIds);
 
-  console.log('Found', rows.length, 'events for category IDs', categoryIds);
-  
   return rows;
 }
+
 
 static async getAllEvents() {
   const [rows] = await db.query(`
@@ -52,13 +48,14 @@ static async getAllEvents() {
         WHERE ec.EventID = e.EventID
       ) AS categories
     FROM events e
-    LEFT JOIN companies cmp ON e.company_id = cmp.user_id
+    LEFT JOIN companies cmp ON e.company_id = cmp.id
     LEFT JOIN user u ON e.company_id = u.UserId
     ORDER BY e.StartDateTime ASC
   `);
 
   return rows;
 }
+
 
 }
 
