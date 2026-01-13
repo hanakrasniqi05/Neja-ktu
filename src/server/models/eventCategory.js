@@ -24,8 +24,8 @@ static async getEventsByCategories(categoryIds) {
         WHERE ec.EventID = e.EventID
       ) AS categories
     FROM events e
-    LEFT JOIN companies cmp ON e.CompanyID = cmp.user_id
-    LEFT JOIN user u ON e.CompanyID = u.UserId
+    LEFT JOIN companies cmp ON e.company_id  = cmp.user_id
+    LEFT JOIN user u ON e.company_id  = u.UserId
     WHERE e.EventID IN (
       SELECT DISTINCT EventID
       FROM event_categories
@@ -52,8 +52,8 @@ static async getAllEvents() {
         WHERE ec.EventID = e.EventID
       ) AS categories
     FROM events e
-    LEFT JOIN companies cmp ON e.CompanyID = cmp.user_id
-    LEFT JOIN user u ON e.CompanyID = u.UserId
+    LEFT JOIN companies cmp ON e.company_id = cmp.user_id
+    LEFT JOIN user u ON e.company_id = u.UserId
     ORDER BY e.StartDateTime ASC
   `);
 

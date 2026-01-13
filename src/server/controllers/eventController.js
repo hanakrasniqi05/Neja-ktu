@@ -4,7 +4,7 @@ const eventController = {
   getAllEvents: async (req, res) => {
     try {
       const [events] = await pool.query(`
-        SELECT 
+       SELECT 
           e.EventID, 
           e.Title, 
           e.Description, 
@@ -12,11 +12,10 @@ const eventController = {
           e.StartDateTime,
           e.EndDateTime,
           e.Image,
-          COALESCE(c.company_name, CONCAT(u.FirstName, ' ', u.LastName)) AS CompanyName,
-          COALESCE(c.logo_path, u.ProfilePicture) AS CompanyLogo
+          c.company_name AS CompanyName,
+          c.logo_path   AS CompanyLogo
         FROM events e
-        LEFT JOIN companies c ON e.CompanyID = c.user_id
-        LEFT JOIN user u ON e.CompanyID = u.UserId
+        LEFT JOIN companies c ON e.company_id = c.id
         ORDER BY e.StartDateTime ASC
       `);
 
@@ -42,13 +41,12 @@ const eventController = {
           e.StartDateTime,
           e.EndDateTime,
           e.Image,
-          ANY_VALUE(u.ProfilePicture) AS companyLogo,
-          ANY_VALUE(COALESCE(c.company_name, CONCAT(u.FirstName, ' ', u.LastName))) AS CompanyName,
+          c.company_name AS CompanyName,
+          c.logo_path   AS CompanyLogo,
           COUNT(r.RegistrationID) AS popularity
         FROM events e
         LEFT JOIN registrations r ON e.EventID = r.EventID
-        LEFT JOIN user u ON e.CompanyID = u.UserId
-        LEFT JOIN companies c ON e.CompanyID = c.user_id
+        LEFT JOIN companies c ON e.company_id = c.id
         GROUP BY e.EventID
         HAVING popularity >= 5
         ORDER BY popularity DESC
@@ -77,11 +75,10 @@ getEventById: async (req, res) => {
         e.StartDateTime,
         e.EndDateTime,
         e.Image,
-        COALESCE(c.company_name, CONCAT(u.FirstName, ' ', u.LastName)) AS CompanyName,
-        COALESCE(c.logo_path, u.ProfilePicture) AS CompanyLogo
+        c.company_name AS CompanyName,
+        c.logo_path   AS CompanyLogo
       FROM events e
-      LEFT JOIN companies c ON e.CompanyID = c.user_id  -- Join on c.user_id
-      LEFT JOIN user u ON e.CompanyID = u.UserId        -- Join on u.UserId
+      LEFT JOIN companies c ON e.company_id = c.id
       WHERE e.EventID = ?
     `, [id]);
 

@@ -23,134 +23,122 @@ function normalizeDates(rows) {
   return rows;
 }
 
+async function getCompanyId(connection, userId) {
+  const [rows] = await connection.query(
+    "SELECT id FROM companies WHERE user_id = ?",
+    [userId]
+  );
+  return rows.length ? rows[0].id : null;
+}
+
+
 // CREATE EVENT - FIXED VERSION
 exports.createEvent = async (req, res) => {
   let connection;
   try {
-    const { title, description, location, startDateTime, endDateTime, category, rsvpLimit } = req.body;
-    const companyId = req.user.UserId || req.user.id;
+    const {
+      title,
+      description,
+      location,
+      startDateTime,
+      endDateTime,
+      category,
+      rsvpLimit
+    } = req.body;
+
     const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
 
     connection = await db.getConnection();
-    await connection.beginTransaction();
 
-    try {
-      // 1. First, insert the event (without Category column)
-      const [eventResult] = await connection.query(
-        `INSERT INTO events 
-          (CompanyID, company_id, Title, Description, Location, StartDateTime, EndDateTime, RsvpLimit, Image)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          companyId, 
-          companyId, 
-          title, 
-          description, 
-          location, 
-          startDateTime, 
-          endDateTime, 
-          rsvpLimit || null, 
-          imagePath
-        ]
-      );
-
-      const eventId = eventResult.insertId;
-
-      // 2. Handle category through many-to-many relationship
-      if (category) {
-        // Check if category exists
-        const [existingCategories] = await connection.query(
-          'SELECT CategoryID FROM categories WHERE Name = ?',
-          [category]
-        );
-
-        let categoryId;
-
-        if (existingCategories.length > 0) {
-          categoryId = existingCategories[0].CategoryID;
-        } else {
-          // Create new category
-          const [categoryResult] = await connection.query(
-            'INSERT INTO categories (Name) VALUES (?)',
-            [category]
-          );
-          categoryId = categoryResult.insertId;
-        }
-
-        // Link event to category
-        await connection.query(
-          'INSERT INTO event_categories (EventID, CategoryID) VALUES (?, ?)',
-          [eventId, categoryId]
-        );
-      }
-
-      await connection.commit();
-
-      // Get the created event with categories
-      const [events] = await connection.query(
-        `SELECT e.*, GROUP_CONCAT(c.Name) as categories
-         FROM events e
-         LEFT JOIN event_categories ec ON e.EventID = ec.EventID
-         LEFT JOIN categories c ON ec.CategoryID = c.CategoryID
-         WHERE e.EventID = ?
-         GROUP BY e.EventID`,
-        [eventId]
-      );
-
-      if (events.length === 0) {
-        return res.status(404).json({ error: "Event not found after creation" });
-      }
-
-      const event = events[0];
-      event.Image = makeImageUrl(req, event.Image);
-      normalizeDates(event);
-
-      res.status(201).json(event);
-
-    } catch (error) {
-      await connection.rollback();
-      throw error;
+    const companyId = await getCompanyId(connection, req.user.UserId);
+    if (!companyId) {
+      return res.status(403).json({ error: "Only companies can create events" });
     }
 
-  } catch (error) {
-    console.error("Error creating event:", error);
-    res.status(500).json({ 
-      error: "Error creating event",
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    await connection.beginTransaction();
+
+    const [eventResult] = await connection.query(
+      `INSERT INTO events
+       (company_id, Title, Description, Location, StartDateTime, EndDateTime, RsvpLimit, Image)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        companyId,
+        title,
+        description,
+        location,
+        startDateTime,
+        endDateTime,
+        rsvpLimit || null,
+        imagePath
+      ]
+    );
+
+    const eventId = eventResult.insertId;
+
+    if (category) {
+      let categoryId;
+      const [existing] = await connection.query(
+        "SELECT CategoryID FROM categories WHERE Name = ?",
+        [category]
+      );
+
+      if (existing.length) {
+        categoryId = existing[0].CategoryID;
+      } else {
+        const [catRes] = await connection.query(
+          "INSERT INTO categories (Name) VALUES (?)",
+          [category]
+        );
+        categoryId = catRes.insertId;
+      }
+
+      await connection.query(
+        "INSERT INTO event_categories (EventID, CategoryID) VALUES (?, ?)",
+        [eventId, categoryId]
+      );
+    }
+
+    await connection.commit();
+    res.status(201).json({ message: "Event created", EventID: eventId });
+
+  } catch (err) {
+    if (connection) await connection.rollback();
+    console.error("Create event error:", err);
+    res.status(500).json({ error: "Error creating event" });
   } finally {
     if (connection) connection.release();
   }
 };
 
+
 // GET EVENTS BY COMPANY - FIXED VERSION
 exports.getEventsByCompany = async (req, res) => {
   try {
-    const companyId = req.user.UserId || req.user.id;
+    const [[company]] = await db.query(
+      "SELECT id FROM companies WHERE user_id = ?",
+      [req.user.UserId]
+    );
 
-    const [results] = await db.query(
-      `SELECT e.*, GROUP_CONCAT(c.Name) as categories
+    if (!company) return res.json([]);
+
+    const [events] = await db.query(
+      `SELECT e.*, GROUP_CONCAT(c.Name) AS categories
        FROM events e
        LEFT JOIN event_categories ec ON e.EventID = ec.EventID
        LEFT JOIN categories c ON ec.CategoryID = c.CategoryID
-       WHERE e.CompanyID = ?
+       WHERE e.company_id = ?
        GROUP BY e.EventID
        ORDER BY e.StartDateTime DESC`,
-      [companyId]
+      [company.id]
     );
 
-    results.forEach(r => {
-      r.Image = makeImageUrl(req, r.Image);
-    });
-    normalizeDates(results);
-    
-    res.json(results);
+    events.forEach(e => e.Image = makeImageUrl(req, e.Image));
+    normalizeDates(events);
+    res.json(events);
 
-  } catch (error) {
-    console.error("Error fetching company events:", error);
-    res.status(500).json({ 
-      error: "Error fetching events",
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error fetching company events" });
   }
 };
 
@@ -158,115 +146,97 @@ exports.getEventsByCompany = async (req, res) => {
 exports.updateEvent = async (req, res) => {
   let connection;
   try {
-    const { title, description, location, startDateTime, endDateTime, category, rsvpLimit } = req.body;
+    const {
+      title,
+      description,
+      location,
+      startDateTime,
+      endDateTime,
+      category,
+      rsvpLimit
+    } = req.body;
+
     const eventId = req.params.id;
     const newImage = req.file ? `/uploads/${req.file.filename}` : null;
-    const companyId = req.user.UserId || req.user.id;
 
     connection = await db.getConnection();
+    const companyId = await getCompanyId(connection, req.user.UserId);
+    if (!companyId) return res.status(403).json({ error: "Unauthorized" });
 
-    // Check if event exists and belongs to company
-    const [existingEvents] = await connection.query(
-      "SELECT * FROM events WHERE EventID = ?", 
+    const [events] = await connection.query(
+      "SELECT * FROM events WHERE EventID = ?",
       [eventId]
     );
 
-    if (existingEvents.length === 0) {
-      return res.status(404).json({ error: "Event not found" });
-    }
-
-    const existing = existingEvents[0];
-    if (existing.CompanyID !== companyId) {
-      return res.status(403).json({ error: "Not authorized to update this event" });
-    }
+    if (!events.length) return res.status(404).json({ error: "Event not found" });
+    if (events[0].company_id !== companyId)
+      return res.status(403).json({ error: "Not authorized" });
 
     await connection.beginTransaction();
 
-    try {
-      // Update event basic info
-      const params = [title, description, location, startDateTime, endDateTime, rsvpLimit];
-      let sql = "UPDATE events SET Title=?, Description=?, Location=?, StartDateTime=?, EndDateTime=?, RsvpLimit=?";
+    let sql =
+      "UPDATE events SET Title=?, Description=?, Location=?, StartDateTime=?, EndDateTime=?, RsvpLimit=?";
+    const params = [
+      title,
+      description,
+      location,
+      startDateTime,
+      endDateTime,
+      rsvpLimit
+    ];
 
-      if (newImage) {
-        sql += ", Image=?";
-        params.push(newImage);
-        
-        // Delete old image if exists
-        if (existing.Image) {
-          const oldPath = path.join(uploadFolder, path.basename(existing.Image));
-          fs.unlink(oldPath, err => {
-            if (err && err.code !== "ENOENT") console.error("Error deleting old image:", err);
-          });
-        }
-      }
+    if (newImage) {
+      sql += ", Image=?";
+      params.push(newImage);
 
-      sql += " WHERE EventID=?";
-      params.push(eventId);
-
-      await connection.query(sql, params);
-
-      // Update category if provided
-      if (category) {
-        // Remove existing categories
-        await connection.query(
-          'DELETE FROM event_categories WHERE EventID = ?',
-          [eventId]
-        );
-
-        // Find or create category
-        const [existingCategories] = await connection.query(
-          'SELECT CategoryID FROM categories WHERE Name = ?',
-          [category]
-        );
-
-        let categoryId;
-        if (existingCategories.length > 0) {
-          categoryId = existingCategories[0].CategoryID;
-        } else {
-          const [categoryResult] = await connection.query(
-            'INSERT INTO categories (Name) VALUES (?)',
-            [category]
-          );
-          categoryId = categoryResult.insertId;
-        }
-
-        // Add new category
-        await connection.query(
-          'INSERT INTO event_categories (EventID, CategoryID) VALUES (?, ?)',
-          [eventId, categoryId]
+      if (events[0].Image) {
+        fs.unlink(
+          path.join(uploadFolder, path.basename(events[0].Image)),
+          () => {}
         );
       }
+    }
 
-      await connection.commit();
+    sql += " WHERE EventID=?";
+    params.push(eventId);
 
-      // Get updated event with categories
-      const [updatedEvents] = await connection.query(
-        `SELECT e.*, GROUP_CONCAT(c.Name) as categories
-         FROM events e
-         LEFT JOIN event_categories ec ON e.EventID = ec.EventID
-         LEFT JOIN categories c ON ec.CategoryID = c.CategoryID
-         WHERE e.EventID = ?
-         GROUP BY e.EventID`,
+    await connection.query(sql, params);
+
+    if (category) {
+      await connection.query(
+        "DELETE FROM event_categories WHERE EventID = ?",
         [eventId]
       );
 
-      const ev = updatedEvents[0];
-      ev.Image = makeImageUrl(req, ev.Image);
-      normalizeDates(ev);
-      
-      res.json(ev);
+      let categoryId;
+      const [existing] = await connection.query(
+        "SELECT CategoryID FROM categories WHERE Name = ?",
+        [category]
+      );
 
-    } catch (error) {
-      await connection.rollback();
-      throw error;
+      if (existing.length) {
+        categoryId = existing[0].CategoryID;
+      } else {
+        const [catRes] = await connection.query(
+          "INSERT INTO categories (Name) VALUES (?)",
+          [category]
+        );
+        categoryId = catRes.insertId;
+      }
+
+      await connection.query(
+        "INSERT INTO event_categories (EventID, CategoryID) VALUES (?, ?)",
+        [eventId, categoryId]
+      );
     }
 
-  } catch (error) {
-    console.error("Error updating event:", error);
-    res.status(500).json({ 
-      error: "Error updating event",
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    await connection.commit();
+    res.json({ message: "Event updated" });
+
+  } catch (err) {
+    if (connection) await connection.rollback();
+    console.error(err);
+    res.status(500).json({ error: "Error updating event" });
   } finally {
     if (connection) connection.release();
   }
@@ -277,65 +247,47 @@ exports.deleteEvent = async (req, res) => {
   let connection;
   try {
     const eventId = req.params.id;
-    const companyId = req.user.UserId || req.user.id;
 
     connection = await db.getConnection();
+    const companyId = await getCompanyId(connection, req.user.UserId);
+    if (!companyId) return res.status(403).json({ error: "Unauthorized" });
 
-    // Check if event exists and belongs to company
-    const [existingEvents] = await connection.query(
-      "SELECT * FROM events WHERE EventID = ?", 
+    const [events] = await connection.query(
+      "SELECT * FROM events WHERE EventID = ?",
       [eventId]
     );
 
-    if (existingEvents.length === 0) {
-      return res.status(404).json({ error: "Event not found" });
-    }
-
-    const existing = existingEvents[0];
-    if (existing.CompanyID !== companyId) {
-      return res.status(403).json({ error: "Not authorized to delete this event" });
-    }
+    if (!events.length) return res.status(404).json({ error: "Event not found" });
+    if (events[0].company_id !== companyId)
+      return res.status(403).json({ error: "Not authorized" });
 
     await connection.beginTransaction();
 
-    try {
-      // Delete from event_categories first
-      await connection.query(
-        'DELETE FROM event_categories WHERE EventID = ?',
-        [eventId]
+    await connection.query(
+      "DELETE FROM event_categories WHERE EventID = ?",
+      [eventId]
+    );
+
+    await connection.query(
+      "DELETE FROM events WHERE EventID = ?",
+      [eventId]
+    );
+
+    await connection.commit();
+
+    if (events[0].Image) {
+      fs.unlink(
+        path.join(uploadFolder, path.basename(events[0].Image)),
+        () => {}
       );
-
-      // Delete the event
-      await connection.query(
-        'DELETE FROM events WHERE EventID = ?',
-        [eventId]
-      );
-
-      await connection.commit();
-
-      // Delete image file
-      if (existing.Image) {
-        const oldPath = path.join(uploadFolder, path.basename(existing.Image));
-        fs.unlink(oldPath, unlinkErr => {
-          if (unlinkErr && unlinkErr.code !== "ENOENT") {
-            console.error("Error deleting image on event delete:", unlinkErr);
-          }
-        });
-      }
-
-      res.json({ message: "Event deleted successfully" });
-
-    } catch (error) {
-      await connection.rollback();
-      throw error;
     }
 
-  } catch (error) {
-    console.error("Error deleting event:", error);
-    res.status(500).json({ 
-      error: "Error deleting event",
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.json({ message: "Event deleted" });
+
+  } catch (err) {
+    if (connection) await connection.rollback();
+    console.error(err);
+    res.status(500).json({ error: "Error deleting event" });
   } finally {
     if (connection) connection.release();
   }
