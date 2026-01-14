@@ -125,16 +125,34 @@ const EventsPage = () => {
     }
   }, [selectedCategories, categories]);
 
+  const getAllNonAllCategories = () => {
+    return categories.filter(cat => cat.label !== 'All').map(cat => cat.label);
+  };
+
   const handleCategoryClick = (label) => {
     setSelectedCategories(prev => {
       if (label === 'All') return ['All'];
 
       if (prev.includes(label)) {
-        const filtered = prev.filter(c => c !== label);
-        return filtered.length ? filtered : ['All'];
+        const newSelection = prev.filter(c => c !== label);
+        if (newSelection.length === 0) {
+          return ['All'];
+        }
+        const allNonAllCategories = getAllNonAllCategories();
+        const areAllSelected = newSelection.length === allNonAllCategories.length && 
+          allNonAllCategories.every(cat => newSelection.includes(cat));
+        return areAllSelected ? ['All'] : newSelection;
+      }
+      if (prev.includes('All')) {
+        return [label];
       }
 
-      return prev.includes('All') ? [label] : [...prev, label];
+      const newSelection = [...prev, label];
+      const allNonAllCategories = getAllNonAllCategories();
+      const areAllSelected = newSelection.length === allNonAllCategories.length && 
+          allNonAllCategories.every(cat => newSelection.includes(cat));
+
+      return areAllSelected ? ['All'] : newSelection;
     });
   };
 
@@ -196,7 +214,8 @@ const EventsPage = () => {
                 type="button"
                 onClick={() => handleCategoryClick(label)}
                 className={`flex items-center space-x-2 px-5 py-2.5 rounded-full border-2 text-sm font-medium transition-all
-                  ${selectedCategories.includes(label)
+                  ${selectedCategories.includes(label) || 
+                    (label === 'All' && selectedCategories.length === getAllNonAllCategories().length)
                     ? 'bg-light-blue text-white border-blue-600'
                     : 'bg-white text-gray-800 border-gray-300 hover:bg-blue-50'}
                   ${!hasEvents && label !== 'All' ? 'opacity-60' : ''}`}
