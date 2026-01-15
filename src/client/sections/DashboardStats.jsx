@@ -20,116 +20,113 @@ export default function AdminStatistics() {
   const token = localStorage.getItem("token");
 
   // Calculate peak hour safely
-  const calculatePeakHour = (events) => {
-    if (!events || events.length === 0) {
-      return { display: "No events", hour: "--", fullRange: "N/A" };
-    }
+// Calculate peak hour safely
+const calculatePeakHour = (events) => {
+  if (!events || events.length === 0) {
+    return { display: "No events", hour: "--", fullRange: "N/A", count: 0 };
+  }
 
-    const hourCounts = {};
-    let validEvents = 0;
+  const hourCounts = {};
 
-    events.forEach(event => {
-      if (event?.date) {
-        try {
-          const eventDate = new Date(event.date);
-          if (!isNaN(eventDate.getTime())) {
-            const hour = eventDate.getHours();
-            hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-            validEvents++;
-          }
-        } catch (e) {
-          // Skip invalid dates
-        }
+  events.forEach(event => {
+    const dateStr = event.StartDateTime || event.date; // Use StartDateTime from DB
+    if (dateStr) {
+      const eventDate = new Date(dateStr);
+      if (!isNaN(eventDate.getTime())) {
+        const hour = eventDate.getHours();
+        hourCounts[hour] = (hourCounts[hour] || 0) + 1;
       }
-    });
-
-    if (validEvents === 0 || Object.keys(hourCounts).length === 0) {
-      return { display: "No time data", hour: "--", fullRange: "N/A" };
     }
+  });
 
-    const peakHour = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0];
-    const peakHourNum = parseInt(peakHour[0]);
-    
-    // Format for display
-    const formatTime = (hour) => {
-      const ampm = hour >= 12 ? 'PM' : 'AM';
-      const hour12 = hour % 12 || 12;
-      return `${hour12} ${ampm}`;
-    };
+  const peakEntry = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0];
+  if (!peakEntry) return { display: "No time data", hour: "--", fullRange: "N/A", count: 0 };
 
-    const nextHour = (peakHourNum + 1) % 24;
-    return {
-      display: `${formatTime(peakHourNum)} - ${formatTime(nextHour)}`,
-      hour: peakHourNum.toString(),
-      fullRange: `${peakHourNum}:00 - ${nextHour}:00`,
-      count: peakHour[1]
-    };
+  const peakHourNum = parseInt(peakEntry[0]);
+  const nextHour = (peakHourNum + 1) % 24;
+
+  const formatTime = (hour) => {
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+    return `${hour12} ${ampm}`;
   };
 
-  // Calculate all statistics
-  const calculateStats = (events, rsvps) => {
-    const now = new Date();
-    const validEvents = events?.filter(e => e?.date && !isNaN(new Date(e.date).getTime())) || [];
-    
-    // Most popular event
-    const mostPopularEvent = validEvents.length > 0 
-      ? validEvents.reduce((max, e) => (e.rsvp_count || 0) > (max?.rsvp_count || 0) ? e : max)
-      : null;
-
-    // Event counts
-    const upcomingEvents = validEvents.filter(e => new Date(e.date) > now).length;
-    const pastEvents = validEvents.filter(e => new Date(e.date) <= now).length;
-
-    // Success rate
-    const successfulEvents = validEvents.filter(e => (e.rsvp_count || 0) > 20).length;
-    const successRate = validEvents.length > 0 
-      ? Math.round((successfulEvents / validEvents.length) * 100)
-      : 0;
-
-    // Average RSVPs
-    const totalRsvps = rsvps?.length || 0;
-    const avgRsvpsPerEvent = validEvents.length > 0 
-      ? (totalRsvps / validEvents.length).toFixed(1)
-      : "0.0";
-
-    // Trending category
-    const categoryCounts = {};
-    validEvents.forEach(event => {
-      const category = event.category || event.type || "General";
-      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-    });
-    
-    const trendingCategory = Object.entries(categoryCounts)
-      .sort((a, b) => b[1] - a[1])[0] || ["No categories", 0];
-
-    // Peak hour
-    const peakHour = calculatePeakHour(validEvents);
-
-    // Growth rate (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const recentEvents = validEvents.filter(e => new Date(e.date) > thirtyDaysAgo).length;
-    const growthRate = validEvents.length > 0 
-      ? ((recentEvents / validEvents.length) * 100).toFixed(1)
-      : "0.0";
-
-    return {
-      totalEvents: validEvents.length,
-      upcomingEvents,
-      pastEvents,
-      mostPopularEvent,
-      avgRsvpsPerEvent,
-      peakHour,
-      successRate,
-      trendingCategory: trendingCategory[0],
-      growthRate,
-      totalRsvps,
-      successfulEvents,
-      recentEvents: validEvents
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 3)
-    };
+  return {
+    display: `${formatTime(peakHourNum)} - ${formatTime(nextHour)}`,
+    hour: peakHourNum.toString(),
+    fullRange: `${peakHourNum}:00 - ${nextHour}:00`,
+    count: peakEntry[1]
   };
+};
+
+// Calculate all statistics
+const calculateStats = (events, rsvps) => {
+  const now = new Date();
+  const validEvents = events?.filter(e => e.StartDateTime && !isNaN(new Date(e.StartDateTime).getTime())) || [];
+
+  // Most popular event (by RSVP count)
+  const mostPopularEvent = validEvents.length > 0 
+    ? validEvents.reduce((max, e) => (e.rsvp_count || 0) > (max?.rsvp_count || 0) ? e : max)
+    : null;
+
+  // Event counts
+  const upcomingEvents = validEvents.filter(e => new Date(e.StartDateTime) > now).length;
+  const pastEvents = validEvents.filter(e => new Date(e.StartDateTime) <= now).length;
+
+  // Success rate (events with >20 RSVPs)
+  const successfulEvents = validEvents.filter(e => (e.rsvp_count || 0) > 20).length;
+  const successRate = validEvents.length > 0 
+    ? Math.round((successfulEvents / validEvents.length) * 100)
+    : 0;
+
+  // Average RSVPs per event
+  const totalRsvps = rsvps?.length || 0;
+  const avgRsvpsPerEvent = validEvents.length > 0 
+    ? (totalRsvps / validEvents.length).toFixed(1)
+    : "0.0";
+
+  // Trending category
+  const categoryCounts = {};
+  validEvents.forEach(event => {
+    const category = event.category || event.type || "General";
+    categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+  });
+
+  const trendingCategory = Object.entries(categoryCounts)
+    .sort((a, b) => b[1] - a[1])[0] || ["No categories", 0];
+
+  // Peak hour
+  const peakHour = calculatePeakHour(validEvents);
+
+  // Growth rate (events in last 30 days)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const recentEventsCount = validEvents.filter(e => new Date(e.StartDateTime) > thirtyDaysAgo).length;
+  const growthRate = validEvents.length > 0 
+    ? ((recentEventsCount / validEvents.length) * 100).toFixed(1)
+    : "0.0";
+
+  // Recent 3 events
+  const recentEvents = validEvents
+    .sort((a, b) => new Date(b.StartDateTime) - new Date(a.StartDateTime))
+    .slice(0, 3);
+
+  return {
+    totalEvents: validEvents.length,
+    upcomingEvents,
+    pastEvents,
+    mostPopularEvent,
+    avgRsvpsPerEvent,
+    peakHour,
+    successRate,
+    trendingCategory: trendingCategory[0],
+    growthRate,
+    totalRsvps,
+    successfulEvents,
+    recentEvents
+  };
+};
+
 
   useEffect(() => {
     const fetchStats = async () => {

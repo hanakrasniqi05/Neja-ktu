@@ -83,57 +83,47 @@ useEffect(() => {
 }, []);
 
   const handleRSVP = async () => {
-    setRsvpLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("You must be logged in to RSVP");
-        return;
-      }
+  setRsvpLoading(true);
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return alert("You must be logged in to RSVP");
 
-      await axios.post(
-        "http://localhost:5000/api/rsvp",
-        { event_id: id, status: "attending" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    const res = await axios.post(
+      "http://localhost:5000/api/rsvps",
+      { event_id: id, status: "attending" },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      alert("RSVP successful!");
-       if (role === "user") {
-      navigate("/user-dashboard");
-      } 
-    }catch (error) {
-      console.error("RSVP failed:", error.response?.data || error.message);
-      alert("Failed to RSVP. Please try again.");
-    } finally {
-      setRsvpLoading(false);
-    }
-  };
-    const handleInterested = async () => {
-    setRsvpLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("You must be logged in to mark interest");
-        return;
-      }
+    alert(res.data.message || "RSVP successful!");
+    // Optional: update state instead of navigating
+  } catch (error) {
+    console.error("RSVP failed:", error.response?.data || error.message);
+    alert(error.response?.data?.message || "Failed to RSVP. Please try again.");
+  } finally {
+    setRsvpLoading(false);
+  }
+};
+const handleInterested = async () => {
+  setRsvpLoading(true);
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return alert("You must be logged in to mark interest");
 
-      await axios.post(
-        "http://localhost:5000/api/rsvp",
-        { event_id: id, status: "interested" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    const res = await axios.put(
+      "http://localhost:5000/api/rsvps",
+      { event_id: id, status: "interested" },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      alert("Event saved as Interested!");
-      if (role === "user") {
-        navigate("/user-dashboard");
-      }
-    } catch (error) {
-      console.error("Interested action failed:", error.response?.data || error.message);
-      alert("Failed to save interest. Please try again.");
-    } finally {
-      setRsvpLoading(false);
-    }
-  };
+    alert(res.data.message || "Event saved as Interested!");
+    // Optional: update state instead of navigating
+  } catch (error) {
+    console.error("Interested action failed:", error.response?.data || error.message);
+    alert(error.response?.data?.message || "Failed to save interest. Please try again.");
+  } finally {
+    setRsvpLoading(false);
+  }
+};
 
   if (loading) {
     return (
