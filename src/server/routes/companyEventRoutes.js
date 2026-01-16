@@ -10,7 +10,9 @@ const {
   createEvent,
   getEvents,
   getPopularEvents,
-  getMyEvents
+  getMyEvents,
+  updateEvent,  
+  deleteEvent   
 } = require('../controllers/eventControllerCompany');
 
 // Route for creating an event (only for verified companies)
@@ -27,6 +29,22 @@ router.get(
   protect,
   verifyCompanyVerified,
   getMyEvents
+);
+
+// Update event (company only)
+router.put(
+  '/:id',
+  protect,
+  verifyCompanyVerified,
+  updateEvent
+);
+
+// Delete event (company only)
+router.delete(
+  '/:id',
+  protect,
+  verifyCompanyVerified,
+  deleteEvent
 );
 
 // Public routes

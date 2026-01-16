@@ -67,31 +67,39 @@ export default function CompanyDashboard() {
 
   // Handle event update
   const handleUpdate = async (id, formData) => {
-    try {
-      const res = await companyEventAPI.updateEvent(id, formData);
-      setEvents(events.map(ev => ev.EventID === id ? res.data : ev));
-      alert("Event updated successfully!");
-    } catch (err) {
-      console.error("Error updating event:", err);
-      alert("Failed to update event");
-    }
-  };
+  try {
+    const res = await companyEventAPI.updateEvent(id, formData);
+    
+    // Update local list
+    setEvents(events.map(ev => 
+      ev.EventID === id ? { ...ev, ...res.data.event } : ev
+    ));
+    
+    alert("Event updated successfully!");
+  } catch (err) {
+    console.error('Error updating event:', err);
+    alert(err.response?.data?.message || "Failed to update event");
+  }
+};
 
   // Handle event deletion
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this event?")) {
-      return;
-    }
+const handleDelete = async (id) => {
+  if (!window.confirm("Are you sure you want to delete this event? This action cannot be undone.")) {
+    return;
+  }
 
-    try {
-      await companyEventAPI.deleteEvent(id);
-      setEvents(events.filter(e => e.EventID !== id));
-      alert("Event deleted successfully!");
-    } catch (err) {
-      console.error("Error deleting event:", err);
-      alert("Failed to delete event");
-    }
-  };
+  try {
+    await companyEventAPI.deleteEvent(id);
+    
+    // Remove from local list
+    setEvents(events.filter(e => e.EventID !== id));
+    
+    alert("Event deleted successfully!");
+  } catch (err) {
+    console.error('Error deleting event:', err);
+    alert(err.response?.data?.message || "Failed to delete event");
+  }
+};
 
   return (
     <div className="flex h-screen font-sans">

@@ -219,9 +219,154 @@ const getMyEvents = async (req, res) => {
   }
 };
 
+const updateEvent = async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    const userId = req.user.id;
+    const { 
+      title, 
+      description, 
+      location, 
+      startDateTime, 
+      endDateTime, 
+      rsvpLimit,
+      category 
+    } = req.body;
+
+    console.log('Update request for event:', eventId);
+    console.log('Update data:', req.body);
+
+    // Find the event and check if it belongs to the logged-in company
+    const [eventRows] = await pool.query(
+      `SELECT e.*, c.user_id 
+       FROM events e 
+       JOIN companies c ON e.company_id = c.id 
+       WHERE e.EventID = ? AND c.user_id = ?`,
+      [eventId, userId]
+    );
+
+    if (eventRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Event not found or you do not have permission to update it' 
+      });
+    }
+
+    // Validation
+    if (!title || !description || !location || !startDateTime || !endDateTime) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'All required fields must be provided' 
+      });
+    }
+
+    // Update the event
+    await pool.query(
+      `UPDATE events 
+       SET Title = ?, Description = ?, Location = ?, 
+           StartDateTime = ?, EndDateTime = ?, RsvpLimit = ?
+       WHERE EventID = ?`,
+      [title, description, location, startDateTime, endDateTime, rsvpLimit || null, eventId]
+    );
+
+    // Update categories
+    await pool.query('DELETE FROM event_categories WHERE EventID = ?', [eventId]);
+    
+    if (category) {
+      const [categoryRows] = await pool.query(
+        'SELECT CategoryID FROM categories WHERE Name = ?',
+        [category]
+      );
+      
+      if (categoryRows.length > 0) {
+        const categoryId = categoryRows[0].CategoryID;
+        await pool.query(
+          'INSERT INTO event_categories (EventID, CategoryID) VALUES (?, ?)',
+          [eventId, categoryId]
+        );
+      }
+    }
+
+    // Fetch the updated event
+    const [updatedEvent] = await pool.query(
+      `SELECT e.*, 
+              c.company_name as CompanyName,
+              c.logo_path as CompanyLogo
+       FROM events e
+       LEFT JOIN companies c ON e.company_id = c.id
+       WHERE e.EventID = ?`,
+      [eventId]
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Event updated successfully', 
+      event: updatedEvent[0] 
+    });
+
+  } catch (error) {
+    console.error('Update event error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error: ' + error.message 
+    });
+  }
+};
+
+const deleteEvent = async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    const userId = req.user.id;
+
+    console.log('Delete request for event:', eventId);
+
+    // Find the event and check if it belongs to the logged-in company
+    const [eventRows] = await pool.query(
+      `SELECT e.*, c.user_id 
+       FROM events e 
+       JOIN companies c ON e.company_id = c.id 
+       WHERE e.EventID = ? AND c.user_id = ?`,
+      [eventId, userId]
+    );
+
+    if (eventRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Event not found or you do not have permission to delete it' 
+      });
+    }
+
+    // Delete the event
+    await pool.query('DELETE FROM events WHERE EventID = ?', [eventId]);
+
+    res.json({ 
+      success: true, 
+      message: 'Event deleted successfully' 
+    });
+
+  } catch (error) {
+    console.error('Delete event error:', error);
+    
+    // If there is a foreign key constraint error
+    if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.code === '23000') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Cannot delete event because it has related data (registrations, comments, etc.)' 
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error: ' + error.message 
+    });
+  }
+};
+
 module.exports = { 
   createEvent, 
   getEvents, 
   getPopularEvents,
-  getMyEvents 
+  getMyEvents,
+  updateEvent,  
+  deleteEvent   
 };
