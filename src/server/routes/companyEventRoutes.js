@@ -1,13 +1,36 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const eventControllerCompany = require("../controllers/eventControllerCompany");
-const { protect, requireRole, verifyCompanyVerified } = require("../middleware/authMiddleware");
-const upload = require("../middleware/uploads"); 
 
-// Routes 
-router.post("/", protect, requireRole("company"), verifyCompanyVerified, upload.single("image"), eventControllerCompany.createEvent);
-router.get("/my-events", protect, requireRole("company"), verifyCompanyVerified, eventControllerCompany.getEventsByCompany);
-router.put("/:id", protect, requireRole("company"), verifyCompanyVerified, upload.single("image"), eventControllerCompany.updateEvent);
-router.delete("/:id", protect, requireRole("company"), verifyCompanyVerified, eventControllerCompany.deleteEvent);
+const {
+  protect,
+  verifyCompanyVerified
+} = require('../middleware/authMiddleware');
+
+const {
+  createEvent,
+  getEvents,
+  getPopularEvents,
+  getMyEvents
+} = require('../controllers/eventControllerCompany');
+
+// Route for creating an event (only for verified companies)
+router.post(
+  '/',
+  protect,
+  verifyCompanyVerified,
+  createEvent
+);
+
+// Route for fetching events of the logged-in company
+router.get(
+  '/my-events',
+  protect,
+  verifyCompanyVerified,
+  getMyEvents
+);
+
+// Public routes
+router.get('/', getEvents);
+router.get('/popular', getPopularEvents);
 
 module.exports = router;

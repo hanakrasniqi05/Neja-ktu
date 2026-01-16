@@ -26,21 +26,6 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'User not found' });
     }
 
-    // If company, check verification status
-    if (user[0].Role === 'company') {
-      const [companyRows] = await pool.query(
-        'SELECT verification_status FROM companies WHERE user_id = ?',
-        [user[0].UserId]
-      );
-
-      if (companyRows.length === 0 || companyRows[0].verification_status !== 'verified') {
-        return res.status(403).json({
-          success: false,
-          message: 'unverified account'
-        });
-      }
-    }
-
     req.user = {
       id: user[0].UserId,
       firstName: user[0].FirstName,
@@ -59,19 +44,31 @@ const protect = async (req, res, next) => {
 // Middleware për të kontrolluar nëse kompania është e verifikuar
 const verifyCompanyVerified = async (req, res, next) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+
     if (req.user.role === 'company') {
       const [companyRows] = await pool.query(
-        'SELECT verification_status FROM companies WHERE user_id = ?',
+        'SELECT id, verification_status FROM companies WHERE user_id = ?',
         [req.user.id]
       );
 
-      if (companyRows.length === 0 || companyRows[0].verification_status !== 'verified') {
+      if (companyRows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Company profile not found'
+        });
+      }
+
+      if (companyRows[0].verification_status !== 'verified') {
         return res.status(403).json({
           success: false,
-          message: 'unverified account'
+          message: 'Company account not verified. Please wait for admin verification.'
         });
       }
     }
+
     next();
   } catch (error) {
     console.error('Verification middleware error:', error);
@@ -91,7 +88,7 @@ const requireRole = (requiredRole) => {
   return (req, res, next) => {
     const userRole = req.user.role;
     
-    if (!roleHierarchy[userRole]?.includes(requiredRole)) {
+    if (!roleHierarchy[requiredRole]?.includes(userRole)) {
       return res.status(403).json({
         success: false,
         message: `Access denied. Requires ${requiredRole} role.`

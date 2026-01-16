@@ -18,9 +18,9 @@ export default function CompanyDashboard() {
     fetchEvents();
   }, []);
 
+  //Fetch all events of the logged-in company
   const fetchEvents = async () => {
     try {
-    
       setError("");
       const res = await companyEventAPI.getMyEvents();
       setEvents(res.data);
@@ -30,18 +30,42 @@ export default function CompanyDashboard() {
     } 
   };
 
+  //Handle event creation
   const handleCreate = async (formData) => {
-    try {
-      const res = await companyEventAPI.createEvent(formData);
-      setEvents([res.data, ...events]);
+  try {
+    console.log('Creating event with data:', formData);
+    
+    const token = localStorage.getItem('token');
+    console.log('Token exists:', !!token);
+    
+    const res = await companyEventAPI.createEvent(formData);
+    console.log('API Response:', res.data);
+    
+    if (res.data.success) {
+      // Refresh the events list
+      await fetchEvents();
+      
       setActivePage("myEvents");
       alert("Event created successfully!");
-    } catch (err) {
-      console.error("Error creating event:", err);
-      alert("Failed to create event");
+    } else {
+      throw new Error(res.data.message || 'Failed to create event');
     }
-  };
+  } catch (err) {
+    console.error('Error creating event:', err);
+    console.error('Full error:', err.response?.data || err.message);
+    
+    let errorMessage = 'Failed to create event';
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    
+    alert(`Error: ${errorMessage}`);
+  }
+};
 
+  // Handle event update
   const handleUpdate = async (id, formData) => {
     try {
       const res = await companyEventAPI.updateEvent(id, formData);
@@ -53,6 +77,7 @@ export default function CompanyDashboard() {
     }
   };
 
+  // Handle event deletion
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this event?")) {
       return;
