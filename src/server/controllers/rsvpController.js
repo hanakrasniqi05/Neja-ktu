@@ -129,7 +129,7 @@ exports.getRSVPsByEvent = async (req, res) => {
     const [rows] = await pool.query(`
       SELECT r.rsvp_id AS rsvp_id, r.user_id, r.status, r.rsvp_date, u.name AS user_name, u.email AS user_email
       FROM rsvp r
-      JOIN users u ON r.user_id = u.id
+      JOIN user u ON r.user_id = u.id
       WHERE r.event_id = ?
       ORDER BY r.rsvp_date DESC
     `, [eventId]);
@@ -141,21 +141,113 @@ exports.getRSVPsByEvent = async (req, res) => {
   }
 };
 
-// get all per admin
+//get all RSVPs with role-based access
 exports.getAllRsvps = async (req, res) => {
   try {
-    const [rows] = await pool.query(`
-      SELECT r.rsvp_id, r.user_id, u.name AS user_name, u.email AS user_email,
-             r.event_id, e.Title AS event_title, r.status, r.rsvp_date
-      FROM rsvp r
-      JOIN users u ON r.user_id = u.id
-      JOIN events e ON r.event_id = e.EventID
-      ORDER BY r.rsvp_date DESC
-    `);
+    // Add safety check
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Authentication required' 
+      });
+    }
 
-    res.json({ success: true, count: rows.length, data: rows });
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    let query = '';
+    let params = [];
+
+    // Debug logging
+    console.log('User info:', { userId, role });
+
+    if (role === 'user') {
+      query = `
+        SELECT 
+          r.rsvp_id AS RSVP_ID,
+          r.user_id AS UserID,
+          CONCAT(u.FirstName, ' ', u.LastName) AS UserName,
+          u.Email AS UserEmail,
+          r.event_id AS EventID,
+          e.Title AS EventTitle,
+          r.status AS Status,
+          r.rsvp_date AS CreatedAt
+        FROM rsvp r
+        JOIN user u ON r.user_id = u.UserId  -- Fixed: u.UserId not u.id
+        JOIN events e ON r.event_id = e.EventID
+        WHERE r.user_id = ?
+        ORDER BY r.rsvp_date DESC
+      `;
+      params = [userId];
+    } else if (role === 'company') {
+      query = `
+        SELECT 
+          r.rsvp_id AS RSVP_ID,
+          r.user_id AS UserID,
+          CONCAT(u.FirstName, ' ', u.LastName) AS UserName,
+          u.Email AS UserEmail,
+          r.event_id AS EventID,
+          e.Title AS EventTitle,
+          r.status AS Status,
+          r.rsvp_date AS CreatedAt
+        FROM rsvp r
+        JOIN user u ON r.user_id = u.UserId  -- Fixed: u.UserId not u.id
+        JOIN events e ON r.event_id = e.EventID
+        WHERE e.company_id = ?
+        ORDER BY r.rsvp_date DESC
+      `;
+      params = [userId];
+    } else if (role === 'admin') {
+      query = `
+        SELECT 
+          r.rsvp_id AS RSVP_ID,
+          r.user_id AS UserID,
+          CONCAT(u.FirstName, ' ', u.LastName) AS UserName,
+          u.Email AS UserEmail,
+          r.event_id AS EventID,
+          e.Title AS EventTitle,
+          r.status AS Status,
+          r.rsvp_date AS CreatedAt
+        FROM rsvp r
+        JOIN user u ON r.user_id = u.UserId  -- Fixed: u.UserId not u.id
+        JOIN events e ON r.event_id = e.EventID
+        ORDER BY r.rsvp_date DESC
+      `;
+      params = [];
+    } else {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Role not allowed to view RSVPs' 
+      });
+    }
+
+    console.log('Executing query:', query);
+    console.log('With params:', params);
+
+    const [rows] = await pool.query(query, params);
+
+    console.log('Query results:', rows);
+
+    res.json({ 
+      success: true, 
+      count: rows.length, 
+      data: rows 
+    });
   } catch (err) {
     console.error('GET ALL RSVPS ERROR:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error('Error details:', {
+      message: err.message,
+      sql: err.sql,
+      sqlMessage: err.sqlMessage
+    });
+    
+    // Don't send multiple responses
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        success: false, 
+        message: 'Server error',
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      });
+    }
   }
 };

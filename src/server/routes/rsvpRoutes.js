@@ -31,5 +31,5 @@ router.put('/:id', protect, requireRole('user'), updateRSVPById);
 // Delete
 router.delete('/', protect, requireRole('user'), deleteRSVP);
 
-router.get('/', getAllRsvps);
+router.get('/', protect, getAllRsvps); 
 module.exports = router;

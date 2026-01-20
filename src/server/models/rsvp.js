@@ -40,6 +40,15 @@ async function updateRSVP(userId, eventId, newStatus) {
     return result.affectedRows;
 }
 
+// Update RSVP by ID 
+async function updateRSVPById(rsvpId, newStatus) {
+    const [result] = await db.execute(
+        `UPDATE rsvp SET status = ? WHERE rsvp_id = ?`,
+        [newStatus, rsvpId]
+    );
+    return result.affectedRows;
+}
+
 // Delete RSVP
 async function deleteRSVP(userId, eventId) {
     const [result] = await db.execute(

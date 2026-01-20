@@ -3,21 +3,43 @@ import axios from "axios";
 
 export default function RSVPs() {
   const [rsvps, setRsvps] = useState([]);
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
     const fetchRsvps = async () => {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get("http://localhost:5000/api/rsvps", {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
-        setRsvps(res.data);
+
+        let data = res.data?.data;
+
+        if (Array.isArray(data)) {
+          setRsvps(data);
+        } else if (Array.isArray(data?.rsvps)) {
+          setRsvps(data.rsvps);
+        } else {
+          setRsvps([]);
+        }
       } catch (error) {
         console.error("Error fetching RSVPs:", error);
+        setRsvps([]);
       }
     };
 
     fetchRsvps();
+  }, []);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("userData");
+    if (storedUser && storedUser !== "undefined") {
+      try {
+        setUserData(JSON.parse(storedUser));
+      } catch {
+        localStorage.removeItem("userData");
+      }
+    }
   }, []);
 
   return (
@@ -45,7 +67,7 @@ export default function RSVPs() {
               </tr>
             </thead>
             <tbody>
-              {rsvps.map((rsvp) => (
+              {Array.isArray(rsvps) && rsvps.map((rsvp) => (
                 <tr key={rsvp.RSVP_ID} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-4">
                     <div className="font-medium">{rsvp.UserName}</div>

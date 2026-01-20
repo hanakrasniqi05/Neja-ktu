@@ -12,7 +12,7 @@ export default function MyRSVP() {
         const res = await axios.get("/api/rsvps/mine", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
-        setRsvps(res.data || []);
+        setRsvps(res.data?.data || []); 
       } catch (err) {
         console.error(err);
         setError("Could not load your RSVPs.");
