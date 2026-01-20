@@ -14,30 +14,43 @@ export default function MyRSVP() {
         });
         setRsvps(res.data || []);
       } catch (err) {
+        console.error(err);
         setError("Could not load your RSVPs.");
+        setRsvps([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchRSVPs();
   }, []);
 
-  const handleStatusChange = async (rsvpId, newStatus) => {
-    try {
-      await axios.put(
-        `/api/rsvps/${rsvpId}`,
-        { status: newStatus },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-      );
+ const handleStatusChange = async (event_id, newStatus) => {
+  try {
+    await axios.put(
+      "/api/rsvps",
+      { event_id, status: newStatus },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
 
-      // update locally so UI changes immediately
+    if (newStatus === "not attending") {
+      setRsvps(prev => prev.filter(r => r.EventID !== event_id));
+    } else {
       setRsvps(prev =>
-        prev.map(r => (r.RsvpID === rsvpId ? { ...r, Status: newStatus } : r))
+        prev.map(r =>
+          r.EventID === event_id ? { ...r, status: newStatus } : r
+        )
       );
-    } catch (err) {
-      alert("Could not update RSVP. Please try again.");
     }
-  };
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    alert("Could not update RSVP");
+  }
+};
 
   if (loading) return <p className="p-4">Loading your RSVPs...</p>;
   if (error) return <p className="p-4 text-red-600">{error}</p>;
@@ -76,7 +89,7 @@ export default function MyRSVP() {
 
           return (
             <li
-              key={rsvp.RsvpID}
+              key={rsvp.rsvp_id}
               className={`flex flex-col md:flex-row rounded-2xl shadow-md overflow-hidden
                 ${isPast ? "bg-light-blue/50" : "bg-light-blue"}`}
             >
@@ -105,17 +118,17 @@ export default function MyRSVP() {
 
               <div className="w-full md:w-44 bg-gray-100 p-6 flex flex-col justify-center text-center">
                 <select
-                  value={rsvp.Status}
-                  onChange={e => handleStatusChange(rsvp.RsvpID, e.target.value)}
+                  value={rsvp.status}
+                  onChange={e => handleStatusChange(rsvp.EventID, e.target.value)}
                   className="border rounded-lg px-2 py-1 text-sm"
                   disabled={isPast} // prevent changing past RSVPs
                 >
                   <option value="attending">Attending</option>
                   <option value="interested">Interested</option>
-                  <option value="not_attending">Not Attending</option>
+                  <option value="not attending">Not Attending</option>
                 </select>
                 <span className="text-xs text-gray-500 mt-2">
-                  RSVP’d on {new Date(rsvp.CreatedAt).toLocaleDateString()}
+                  RSVP’d on {new Date(rsvp.rsvp_date).toLocaleDateString()}
                 </span>
               </div>
             </li>
