@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import logo from '../assets/logo-pin-b.png';
+import logo from '../assets/logopin-ds.png';
 
 function CompanySignupForm() {
   const navigate = useNavigate();
@@ -323,8 +323,8 @@ function CompanySignupForm() {
         </div>
 
         {/* Logo / image section */}
-        <div className="hidden md:flex items-center justify-center bg-gradient-to-br from-[#E0F2FE] via-[#BAE6FD] to-[#93C5FD]">
-          <img src={logo} alt="Logo" className="w-3/4 h-auto" />
+        <div className="hidden md:flex items-center justify-center bg-gradient-to-br from-[#E0F2FE] via-[#BAE6FD] to-[#48CAE4]">
+          <img src={logo} alt="Logo" className="w-full h-auto" />
         </div>
       </div>
     </div>
