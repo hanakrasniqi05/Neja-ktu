@@ -2,34 +2,34 @@ const pool = require('../database');
 
 const eventController = {
   getAllEvents: async (req, res) => {
-    try {
-      const [events] = await pool.query(`
-       SELECT 
-          e.EventID, 
-          e.Title, 
-          e.Description, 
-          e.Location, 
-          e.StartDateTime,
-          e.EndDateTime,
-          e.Image,
-          c.company_name AS CompanyName,
-          c.logo_path   AS CompanyLogo
-        FROM events e
-        LEFT JOIN companies c ON e.company_id = c.id
-        ORDER BY e.StartDateTime ASC
-      `);
+  try {
+    const [events] = await pool.query(`
+      SELECT 
+        e.EventID, 
+        e.Title, 
+        e.Description, 
+        e.Location, 
+        e.StartDateTime,
+        e.EndDateTime,
+        e.Image,
+        c.company_name AS CompanyName,
+        c.logo_path   AS CompanyLogo
+      FROM events e
+      LEFT JOIN companies c ON e.company_id = c.id
+      ORDER BY
+        CASE 
+          WHEN e.EndDateTime >= NOW() THEN 0
+          ELSE 1
+        END,
+        e.StartDateTime DESC
+    `);
 
-      console.log('Successfully fetched events:', events.length);
-      res.json(events);
-    } catch (error) {
-      console.error('Error in simplified events query:', error);
-      res.status(500).json({ 
-        error: 'Failed to fetch events',
-        details: error.message 
-      });
-    }
-  },
-
+    res.json(events);
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    res.status(500).json({ error: 'Failed to fetch events' });
+  }
+},
   getPopularEvents: async (req, res) => {
     try {
       const [events] = await pool.query(`

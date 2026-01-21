@@ -9,7 +9,13 @@ exports.createRSVP = async (req, res) => {
   if (!event_id) {
     return res.status(400).json({ success: false, message: 'event_id is required' });
   }
-
+  const [rows]= await pool.query('SELECT * FROM events WHERE EventID = ?', [event_id]);
+  if (rows.length === 0) {
+    return res.status(404).json ({
+      success: false,
+      message: 'Cannot RSVP to past events'
+    });
+  }
   try {
     const existing = await RSVP.getRSVP(user_id, event_id);
 

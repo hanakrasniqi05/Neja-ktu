@@ -109,7 +109,7 @@ const handleInterested = async () => {
     const token = localStorage.getItem("token");
     if (!token) return alert("You must be logged in to mark interest");
 
-    const res = await axios.put(
+    const res = await axios.post(
       "http://localhost:5000/api/rsvps",
       { event_id: id, status: "interested" },
       { headers: { Authorization: `Bearer ${token}` } }
@@ -183,6 +183,9 @@ const handleInterested = async () => {
 
   const startDate = new Date(event.StartDateTime).toLocaleDateString();
   const endDate = new Date(event.EndDateTime).toLocaleDateString();
+  const now = new Date();
+  const eventEnd = new Date(event.EndDateTime);
+  const isPastEvent = eventEnd < now;
 
   return (
     <>
@@ -227,23 +230,31 @@ const handleInterested = async () => {
         <p className="text-gray-700 whitespace-pre-line mb-6">{event.Description}</p>
 
         {/* RSVP Button */}
-        <div className="mt-6 mb-8 flex gap-4">
-          <button
-            onClick={handleRSVP}
-            disabled={rsvpLoading}
-            className="px-6 py-2 bg-yellow-400 text-black rounded-lg font-semibold shadow hover:bg-yellow-500 disabled:opacity-50"
-          >
-            {rsvpLoading ? "Processing..." : "RSVP"}
-          </button>
+        <div className="mt-6 mb-8">
+  {isPastEvent ? (
+    <div className="px-4 py-3 bg-gray-100 text-gray-600 rounded-lg text-center font-medium">
+      This event has already ended. RSVPs are closed.
+    </div>
+  ) : (
+    <div className="flex gap-4">
+      <button
+        onClick={handleRSVP}
+        disabled={rsvpLoading}
+        className="px-6 py-2 bg-yellow-400 text-black rounded-lg font-semibold shadow hover:bg-yellow-500 disabled:opacity-50"
+      >
+        {rsvpLoading ? "Processing..." : "RSVP"}
+      </button>
 
-          <button
-            onClick={handleInterested}
-            disabled={rsvpLoading}
-            className="px-6 py-2 bg-teal-blue text-white rounded-lg font-semibold shadow hover:bg-blue-500 disabled:opacity-50"
-          >
-            {rsvpLoading ? "Processing..." : "Interested"}
-          </button>
-        </div>
+      <button
+        onClick={handleInterested}
+        disabled={rsvpLoading}
+        className="px-6 py-2 bg-teal-blue text-white rounded-lg font-semibold shadow hover:bg-blue-500 disabled:opacity-50"
+      >
+        {rsvpLoading ? "Processing..." : "Interested"}
+      </button>
+    </div>
+  )}
+</div>
 
         {/* Comments Section */}
         <div className="mt-8 border-t pt-8">
