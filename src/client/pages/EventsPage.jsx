@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Music, Globe, HeartPulse, Cpu, Briefcase, Dumbbell,
-  Palette, GraduationCap, UtensilsCrossed, Star
+  Palette, GraduationCap, UtensilsCrossed, Star, Layers
 } from 'lucide-react';
 import Header from '../components/Header.jsx';
 import Footer from '../components/Footer.jsx';
@@ -18,7 +18,16 @@ const categoryIcons = {
   'Art': <Palette size={16} />,
   'Education': <GraduationCap size={16} />,
   'Food': <UtensilsCrossed size={16} />,
+  'Others': <Layers size={16} />,
   'All': <Star size={16} />
+};
+
+const sortEventsByDate = (events) => {
+  return [...events].sort((a, b) => {
+    const dateA = new Date(a.StartDateTime || a.EventDate || 0);
+    const dateB = new Date(b.StartDateTime || b.EventDate || 0);
+    return dateB - dateA;
+  });
 };
 
 const EventsPage = () => {
@@ -31,38 +40,67 @@ const EventsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const categoriesResponse = await eventCategoryAPI.getAllCategories();
-        const eventsResponse = await eventCategoryAPI.getAllEvents();
-        const allEventsData = eventsResponse.data || eventsResponse || [];
-        setAllEvents(allEventsData);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch categories and events
+      const categoriesResponse = await eventCategoryAPI.getAllCategories();
+      const eventsResponse = await eventCategoryAPI.getAllEvents();
+      const allEventsData = eventsResponse.data || eventsResponse || [];
+      const sortedEvents = sortEventsByDate(allEventsData);
+      setAllEvents(sortedEvents);
 
-        // Count events per category
-        const stats = {};
-        allEventsData.forEach(event => {
-          if (event.categories) {
-            event.categories.split(',').forEach(catName => {
-              const trimmedCat = catName.trim();
-              stats[trimmedCat] = (stats[trimmedCat] || 0) + 1;
-            });
+      // Count events per category
+      const stats = {};
+      let othersCount = 0;
+      const knownCategoryNames = categoriesResponse.data.map(cat => cat.Name);
+
+      sortedEvents.forEach(event => {
+        if (!event.categories) {
+          othersCount++;
+          return;
+        }
+
+        const eventCats = event.categories.split(',').map(cat => cat.trim());
+        let matched = false;
+
+        eventCats.forEach(catName => {
+          if (knownCategoryNames.includes(catName)) {
+            stats[catName] = (stats[catName] || 0) + 1;
+            matched = true;
           }
         });
 
-        // Build categories list
-        const allCategoriesList = categoriesResponse.data.map(cat => ({
-          label: cat.Name,
-          id: cat.CategoryID,
-          icon: categoryIcons[cat.Name] || <Star size={16} />,
-          eventCount: stats[cat.Name] || 0,
-          hasEvents: (stats[cat.Name] || 0) > 0
-        }));
+        if (!matched) othersCount++;
+      });
 
-        allCategoriesList.sort((a, b) => {
-          if (a.hasEvents !== b.hasEvents) return b.hasEvents - a.hasEvents;
-          return a.label.localeCompare(b.label);
+      // Build categories list
+      const allCategoriesList = categoriesResponse.data.map(cat => ({
+        label: cat.Name,
+        id: cat.CategoryID,
+        icon: categoryIcons[cat.Name] || <Star size={16} />,
+        eventCount: stats[cat.Name] || 0,
+        hasEvents: (stats[cat.Name] || 0) > 0
+      }));
+
+      // Sort categories 
+      allCategoriesList.sort((a, b) => {
+        if (a.hasEvents !== b.hasEvents) return b.hasEvents - a.hasEvents;
+        return a.label.localeCompare(b.label);
+      });
+
+      if (!allCategoriesList.some(c => c.label === 'Others')) {
+        allCategoriesList.push({
+          label: 'Others',
+          id: 'others',
+          icon: <Layers size={16} />,
+          eventCount: othersCount,
+          hasEvents: othersCount > 0
         });
+      }
 
+      // Add "All" category at the beginning 
+      if (!allCategoriesList.some(c => c.label === 'All')) {
         allCategoriesList.unshift({
           label: 'All',
           id: null,
@@ -70,54 +108,81 @@ const EventsPage = () => {
           eventCount: allEventsData.length,
           hasEvents: allEventsData.length > 0
         });
-
-        setCategories(allCategoriesList);
-        setEvents(allEventsData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setCategories([]);
-        setEvents([]);
-        setAllEvents([]);
-      } finally {
-        setLoading(false);
       }
-    };
+      const uniqueCategories = allCategoriesList.filter(
+        (cat, index, self) => index === self.findIndex(c => c.label === cat.label)
+      );
 
-    fetchData();
-  }, []);
+      setCategories(uniqueCategories);
+      setEvents(sortedEvents);
 
-  const fetchEvents = async (selectedCats) => {
-    setLoading(true);
-    setHasNoEventsForSelection(false);
-
-    try {
-      let response;
-
-      if (selectedCats.includes('All')) {
-        response = await eventCategoryAPI.getAllEvents();
-      } else {
-        const categoryIds = selectedCats
-          .map(catName => categories.find(c => c.label === catName)?.id)
-          .filter(Boolean);
-
-        if (categoryIds.length > 0) {
-          const categoryQueryString = categoryIds.join(',');
-          response = await eventCategoryAPI.getEventsByCategory(categoryQueryString);
-        } else {
-          response = await eventCategoryAPI.getAllEvents();
-        }
-      }
-
-      setEvents(response.data);
-      if (response.data.length === 0) setHasNoEventsForSelection(true);
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error('Error fetching data:', error);
+      setCategories([]);
       setEvents([]);
-      setHasNoEventsForSelection(true);
+      setAllEvents([]);
     } finally {
       setLoading(false);
     }
   };
+
+  fetchData();
+}, []);
+
+
+ const fetchEvents = async (selectedCats) => {
+  setLoading(true);
+  setHasNoEventsForSelection(false);
+
+  try {
+    // "All" overrides everything
+    if (selectedCats.includes('All')) {
+      const response = await eventCategoryAPI.getAllEvents();
+      setEvents(sortEventsByDate(response.data || response || []));
+      return;
+    }
+
+    if (selectedCats.length === 1 && selectedCats[0] === 'Others') {
+      const knownCategoryNames = categories
+        .filter(cat => cat.label !== 'All' && cat.label !== 'Others')
+        .map(cat => cat.label);
+
+      const othersEvents = allEvents.filter(event => {
+        if (!event.categories) return true;
+        const eventCats = event.categories.split(',').map(cat => cat.trim());
+        return !eventCats.some(cat => knownCategoryNames.includes(cat));
+      });
+
+      setEvents(othersEvents);
+      if (othersEvents.length === 0) setHasNoEventsForSelection(true);
+      return;
+    }
+
+    //category filtering 
+    const categoryIds = selectedCats
+      .map(catName => categories.find(c => c.label === catName)?.id)
+      .filter(Boolean);
+
+    if (categoryIds.length > 0) {
+      const categoryQueryString = categoryIds.join(',');
+      const response = await eventCategoryAPI.getEventsByCategory(categoryQueryString);
+      const sortedData = sortEventsByDate(response.data || response || []);
+      setEvents(sortedData);
+      if (sortedData.length === 0) setHasNoEventsForSelection(true);
+    } else {
+      setEvents([]);
+      setHasNoEventsForSelection(true);
+    }
+
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    setEvents([]);
+    setHasNoEventsForSelection(true);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     if (categories.length > 0 && selectedCategories.length > 0 && !searchTerm.trim()) {
