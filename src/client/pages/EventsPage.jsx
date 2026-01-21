@@ -29,11 +29,26 @@ const sortEventsByDate = (events) => {
     return dateB - dateA;
   });
 };
+const filterPastEvents = (events) => {
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0);
+  
+  return events.filter(event => {
+    const eventDate = new Date(event.StartDateTime || event.EventDate);
+    const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+    return eventDateOnly >= currentDate;
+  });
+};
+
+const getEventDate = (event) => {
+  return new Date(event.StartDateTime || event.EventDate);
+};
 
 const EventsPage = () => {
   const [selectedCategories, setSelectedCategories] = useState(['All']);
   const [events, setEvents] = useState([]);
   const [allEvents, setAllEvents] = useState([]);
+  const [allUpcomingEvents, setAllUpcomingEvents] = useState([]); // Store all upcoming events
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasNoEventsForSelection, setHasNoEventsForSelection] = useState(false);
@@ -47,8 +62,11 @@ const EventsPage = () => {
       const categoriesResponse = await eventCategoryAPI.getAllCategories();
       const eventsResponse = await eventCategoryAPI.getAllEvents();
       const allEventsData = eventsResponse.data || eventsResponse || [];
-      const sortedEvents = sortEventsByDate(allEventsData);
+      // Filter out past events
+      const upcomingEvents = filterPastEvents(allEventsData);
+      const sortedEvents = sortEventsByDate(upcomingEvents);
       setAllEvents(sortedEvents);
+      setAllUpcomingEvents(sortedEvents); // Store all upcoming events separately
 
       // Count events per category
       const stats = {};
@@ -81,7 +99,7 @@ const EventsPage = () => {
         icon: categoryIcons[cat.Name] || <Star size={16} />,
         eventCount: stats[cat.Name] || 0,
         hasEvents: (stats[cat.Name] || 0) > 0
-      }));
+        }));
 
       // Sort categories 
       allCategoriesList.sort((a, b) => {
@@ -99,16 +117,17 @@ const EventsPage = () => {
         });
       }
 
-      // Add "All" category at the beginning 
+        // Add "All" category at the beginning 
       if (!allCategoriesList.some(c => c.label === 'All')) {
         allCategoriesList.unshift({
           label: 'All',
           id: null,
           icon: <Star size={16} />,
-          eventCount: allEventsData.length,
-          hasEvents: allEventsData.length > 0
+          eventCount: sortedEvents.length,
+          hasEvents: sortedEvents.length > 0
         });
       }
+        
       const uniqueCategories = allCategoriesList.filter(
         (cat, index, self) => index === self.findIndex(c => c.label === cat.label)
       );
@@ -121,24 +140,24 @@ const EventsPage = () => {
       setCategories([]);
       setEvents([]);
       setAllEvents([]);
+      setAllUpcomingEvents([]);
     } finally {
       setLoading(false);
     }
   };
 
-  fetchData();
-}, []);
+    fetchData();
+  }, []);
 
-
- const fetchEvents = async (selectedCats) => {
+  const fetchEvents = async (selectedCats) => {
   setLoading(true);
   setHasNoEventsForSelection(false);
 
-  try {
+    try {
     // "All" overrides everything
     if (selectedCats.includes('All')) {
-      const response = await eventCategoryAPI.getAllEvents();
-      setEvents(sortEventsByDate(response.data || response || []));
+      // Use the already filtered upcoming events
+      setEvents(allUpcomingEvents);
       return;
     }
 
@@ -147,7 +166,7 @@ const EventsPage = () => {
         .filter(cat => cat.label !== 'All' && cat.label !== 'Others')
         .map(cat => cat.label);
 
-      const othersEvents = allEvents.filter(event => {
+      const othersEvents = allUpcomingEvents.filter(event => {
         if (!event.categories) return true;
         const eventCats = event.categories.split(',').map(cat => cat.trim());
         return !eventCats.some(cat => knownCategoryNames.includes(cat));
@@ -166,7 +185,12 @@ const EventsPage = () => {
     if (categoryIds.length > 0) {
       const categoryQueryString = categoryIds.join(',');
       const response = await eventCategoryAPI.getEventsByCategory(categoryQueryString);
-      const sortedData = sortEventsByDate(response.data || response || []);
+      const allEventsFromAPI = response.data || response || [];
+        
+      // Filter out past events from the API response
+      const upcomingEventsFromAPI = filterPastEvents(allEventsFromAPI);
+      const sortedData = sortEventsByDate(upcomingEventsFromAPI);
+
       setEvents(sortedData);
       if (sortedData.length === 0) setHasNoEventsForSelection(true);
     } else {
@@ -182,7 +206,6 @@ const EventsPage = () => {
     setLoading(false);
   }
 };
-
 
   useEffect(() => {
     if (categories.length > 0 && selectedCategories.length > 0 && !searchTerm.trim()) {
@@ -241,7 +264,9 @@ const EventsPage = () => {
     }
     
     const term = searchTerm.toLowerCase().trim();
-    return allEvents.filter(event => {
+    
+    // filter allUpcomingEvents
+    const searchResults = allUpcomingEvents.filter(event => {
       const eventTitle = event.Title || event.EventName || '';
       const location = event.Location || '';
       const categories = event.categories || '';
@@ -251,6 +276,7 @@ const EventsPage = () => {
         categories.toLowerCase().includes(term)
       );
     });
+    return searchResults;
   };
 
   const filteredEvents = getFilteredEvents();
