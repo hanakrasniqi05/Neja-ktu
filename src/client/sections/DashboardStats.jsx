@@ -80,7 +80,10 @@ const calculateStats = (events, rsvps) => {
     : 0;
 
   // Average RSVPs per event
-  const totalRsvps = rsvps?.length || 0;
+  const totalRsvps = Array.isArray(rsvps)
+  ? rsvps.filter(r => r.status === "attending").length
+  : rsvps?.data?.length || 0;
+
   const avgRsvpsPerEvent = validEvents.length > 0 
     ? (totalRsvps / validEvents.length).toFixed(1)
     : "0.0";
@@ -421,7 +424,7 @@ const calculateStats = (events, rsvps) => {
                         {event.title}
                       </h4>
                       <p className="text-gray-500 text-xs sm:text-sm">
-                        {new Date(event.date).toLocaleDateString()}
+                        {new Date(event.StartDateTime).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="text-right pl-2">
