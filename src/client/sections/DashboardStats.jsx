@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import {
   Calendar,
@@ -13,302 +13,219 @@ import {
   Zap
 } from "lucide-react";
 
+const categoryKeywords = {
+  Tech: ["tech", "technology", "coding", "programming", "software", "digital"],
+  Workshop: ["workshop", "training", "tutorial", "skill"],
+  Conference: ["conference", "summit", "forum", "symposium"],
+  Networking: ["networking", "meetup", "connect", "social"],
+  Social: ["party", "social", "gathering", "celebration"],
+  Art: ["art", "exhibition", "creative", "painting", "design"],
+  Music: ["music", "concert", "band", "performance"],
+  Food: ["food", "culinary", "cooking", "restaurant"],
+  Health: ["health", "wellness", "fitness", "yoga", "meditation"],
+  Business: ["business", "startup", "entrepreneur", "pitch", "finance"],
+};
+
 export default function AdminStatistics() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [animatedValues, setAnimatedValues] = useState({});
   const token = localStorage.getItem("token");
 
-  // Calculate peak hour safely
-// Calculate peak hour safely
-const calculatePeakHour = (events) => {
-  if (!events || events.length === 0) {
-    return { display: "No events", hour: "--", fullRange: "N/A", count: 0 };
-  }
+  //Calculate peak hour safely
+  const calculatePeakHour = (events) => {
+    if (!events?.length) return { display: "No events", hour: "--", fullRange: "N/A", count: 0 };
 
-  const hourCounts = {};
+    const hourCounts = events.reduce((acc, { StartDateTime, date }) => {
+      const dt = new Date(StartDateTime || date);
+      if (!isNaN(dt.getTime())) acc[dt.getHours()] = (acc[dt.getHours()] || 0) + 1;
+      return acc;
+    }, {});
 
-  events.forEach(event => {
-    const dateStr = event.StartDateTime || event.date; // Use StartDateTime from DB
-    if (dateStr) {
-      const eventDate = new Date(dateStr);
-      if (!isNaN(eventDate.getTime())) {
-        const hour = eventDate.getHours();
-        hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-      }
-    }
-  });
+    const peakHourNum = Object.entries(hourCounts)
+      .sort((a, b) => b[1] - a[1])[0]?.[0];
 
-  const peakEntry = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0];
-  if (!peakEntry) return { display: "No time data", hour: "--", fullRange: "N/A", count: 0 };
+    if (peakHourNum === undefined) return { display: "No time data", hour: "--", fullRange: "N/A", count: 0 };
 
-  const peakHourNum = parseInt(peakEntry[0]);
-  const nextHour = (peakHourNum + 1) % 24;
-
-  const formatTime = (hour) => {
-    const ampm = hour >= 12 ? "PM" : "AM";
-    const hour12 = hour % 12 || 12;
-    return `${hour12} ${ampm}`;
-  };
+    const nextHour = (parseInt(peakHourNum) + 1) % 24;
+    const formatTime = (h) => `${h % 12 || 12} ${h >= 12 ? "PM" : "AM"}`;
 
   return {
     display: `${formatTime(peakHourNum)} - ${formatTime(nextHour)}`,
     hour: peakHourNum.toString(),
     fullRange: `${peakHourNum}:00 - ${nextHour}:00`,
-    count: peakEntry[1]
+    count: hourCounts[peakHourNum],
   };
 };
 
-// Calculate all statistics
-const calculateStats = (events, rsvps) => {
-  const now = new Date();
-  const validEvents = events?.filter(e => e.StartDateTime && !isNaN(new Date(e.StartDateTime).getTime())) || [];
+  // Calculate all statistics
+  const calculateStats = (events, rsvps) => {
+    const now = new Date();
+    const validEvents = events?.filter(e => !isNaN(new Date(e.StartDateTime).getTime())) || [];
+    const rsvpData = Array.isArray(rsvps) ? rsvps : rsvps?.data || [];
 
-  // Most popular event (by RSVP count)
-  const mostPopularEvent = validEvents.length > 0 
-    ? validEvents.reduce((max, e) => (e.rsvp_count || 0) > (max?.rsvp_count || 0) ? e : max)
-    : null;
+    // Map eventID => RSVP count
+    const rsvpCountMap = {};
+    const attendingRsvps = [];
+    rsvpData.forEach(({ EventID, Status }) => {
+      if (EventID && Status?.toLowerCase() === "attending") {
+        rsvpCountMap[EventID] = (rsvpCountMap[EventID] || 0) + 1;
+        attendingRsvps.push({ EventID, Status });
+      }
+    });
 
-  // Event counts
-  const upcomingEvents = validEvents.filter(e => new Date(e.StartDateTime) > now).length;
-  const pastEvents = validEvents.filter(e => new Date(e.StartDateTime) <= now).length;
+    const eventsWithRsvp = validEvents.map(e => ({
+      ...e,
+      rsvp_count: rsvpCountMap[e.EventID] || 0,
+    }));
 
-  // Success rate (events with >20 RSVPs)
-  const successfulEvents = validEvents.filter(e => (e.rsvp_count || 0) > 20).length;
-  const successRate = validEvents.length > 0 
-    ? Math.round((successfulEvents / validEvents.length) * 100)
-    : 0;
+    const mostPopularEvent = eventsWithRsvp.reduce((max, e) =>
+      (e.rsvp_count || 0) > (max?.rsvp_count || 0) ? e : max, null
+    );
 
-  // Average RSVPs per event
-  const totalRsvps = Array.isArray(rsvps)
-  ? rsvps.filter(r => r.status === "attending").length
-  : rsvps?.data?.length || 0;
+    const upcomingEvents = eventsWithRsvp.filter(e => new Date(e.StartDateTime) > now).length;
+    const pastEvents = eventsWithRsvp.length - upcomingEvents;
+    const successfulEvents = eventsWithRsvp.filter(e => e.rsvp_count > 20).length;
+    const successRate = eventsWithRsvp.length ? Math.round((successfulEvents / eventsWithRsvp.length) * 100) : 0;
+    const avgRsvpsPerEvent = eventsWithRsvp.length ? (attendingRsvps.length / eventsWithRsvp.length).toFixed(1) : "0.0";
 
-  const avgRsvpsPerEvent = validEvents.length > 0 
-    ? (totalRsvps / validEvents.length).toFixed(1)
-    : "0.0";
+    // Trending Category
+    const categoryCounts = {};
+    eventsWithRsvp.forEach((event) => {
+      let categories = typeof event.categories === "string" ? event.categories.split(",").map(c => c.trim()) : [];
+      if (!categories.length) {
+        const text = `${event.Title || ""} ${event.Description || ""}`.toLowerCase();
+        categories = Object.entries(categoryKeywords)
+          .filter(([_, keywords]) => keywords.some(k => text.includes(k)))
+          .map(([cat]) => cat);
+      }
+      if (!categories.length) categories = ["General"];
+      categories.forEach(c => categoryCounts[c] = (categoryCounts[c] || 0) + 1);
+    });
+    const trendingCategory = Object.entries(categoryCounts).reduce((a, [cat, count]) => count > a.count ? { cat, count } : a, { cat: "General", count: 0 }).cat;
 
-  // Trending category
-  const categoryCounts = {};
-  validEvents.forEach(event => {
-    const category = event.category || event.type || "General";
-    categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    const peakHour = calculatePeakHour(eventsWithRsvp);
+    const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const growthRate = eventsWithRsvp.length
+      ? ((eventsWithRsvp.filter(e => new Date(e.StartDateTime) > thirtyDaysAgo).length / eventsWithRsvp.length) * 100).toFixed(1)
+      : "0.0";
+
+    const recentEvents = eventsWithRsvp
+      .sort((a, b) => new Date(b.StartDateTime) - new Date(a.StartDateTime))
+      .slice(0, 3);
+
+    return {
+      totalEvents: eventsWithRsvp.length,
+      upcomingEvents,
+      pastEvents,
+      mostPopularEvent,
+      avgRsvpsPerEvent,
+      peakHour,
+      successRate,
+      trendingCategory,
+      growthRate,
+      totalRsvps: attendingRsvps.length,
+      successfulEvents,
+      recentEvents,
+    };
+  };
+
+  const getEmptyStats = () => ({
+    totalEvents: 0,
+    upcomingEvents: 0,
+    pastEvents: 0,
+    mostPopularEvent: null,
+    avgRsvpsPerEvent: "0.0",
+    peakHour: { display: "No events", hour: "--", fullRange: "N/A" },
+    successRate: 0,
+    trendingCategory: "General",
+    growthRate: "0.0",
+    totalRsvps: 0,
+    successfulEvents: 0,
+    recentEvents: [],
   });
 
-  const trendingCategory = Object.entries(categoryCounts)
-    .sort((a, b) => b[1] - a[1])[0] || ["No categories", 0];
+  // Fetch Data
+  const fetchStats = useCallback(async () => {
+    try {
+      const [eventsRes, rsvpsRes] = await Promise.all([
+        axios.get("http://localhost:5000/api/admin/events", { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get("http://localhost:5000/api/admin/rsvps", { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      setStats(calculateStats(eventsRes.data, rsvpsRes.data));
 
-  // Peak hour
-  const peakHour = calculatePeakHour(validEvents);
+      // Animate key numbers
+      const keys = ["totalEvents", "upcomingEvents", "successRate"];
+      keys.forEach((key, i) => setTimeout(() => animateValue(key, 0, eventsRes.data.length), 200 * (i + 1)));
 
-  // Growth rate (events in last 30 days)
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const recentEventsCount = validEvents.filter(e => new Date(e.StartDateTime) > thirtyDaysAgo).length;
-  const growthRate = validEvents.length > 0 
-    ? ((recentEventsCount / validEvents.length) * 100).toFixed(1)
-    : "0.0";
-
-  // Recent 3 events
-  const recentEvents = validEvents
-    .sort((a, b) => new Date(b.StartDateTime) - new Date(a.StartDateTime))
-    .slice(0, 3);
-
-  return {
-    totalEvents: validEvents.length,
-    upcomingEvents,
-    pastEvents,
-    mostPopularEvent,
-    avgRsvpsPerEvent,
-    peakHour,
-    successRate,
-    trendingCategory: trendingCategory[0],
-    growthRate,
-    totalRsvps,
-    successfulEvents,
-    recentEvents
-  };
-};
-
-
-  useEffect(() => {
-    const fetchStats = async () => {
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
       try {
-        const [eventsRes, rsvpsRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/admin/events", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get("http://localhost:5000/api/admin/rsvps", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-
-        const statsData = calculateStats(eventsRes.data, rsvpsRes.data);
-        setStats(statsData);
-
-        // Animate key numbers
-        const numbersToAnimate = {
-          totalEvents: statsData.totalEvents,
-          upcomingEvents: statsData.upcomingEvents,
-          successRate: statsData.successRate
-        };
-
-        Object.entries(numbersToAnimate).forEach(([key, value]) => {
-          setTimeout(() => {
-            animateValue(key, 0, value, 800);
-          }, 200);
-        });
-
-      } catch (error) {
-        console.error("Error fetching statistics:", error);
-        setStats({
-          error: "Failed to load statistics",
-          totalEvents: 0,
-          upcomingEvents: 0,
-          pastEvents: 0,
-          peakHour: { display: "Error loading", hour: "--", fullRange: "N/A" },
-          successRate: 0,
-          avgRsvpsPerEvent: "0.0",
-          trendingCategory: "Error",
-          growthRate: "0.0",
-          totalRsvps: 0,
-          successfulEvents: 0,
-          recentEvents: []
-        });
-      } finally {
-        setLoading(false);
+        const rsvpsRes = await axios.get("http://localhost:5000/api/admin/rsvps", { headers: { Authorization: `Bearer ${token}` } });
+        setStats(calculateStats({ error: "Events API failed" }, rsvpsRes.data));
+      } catch {
+        setStats(getEmptyStats());
       }
-    };
-
-    fetchStats();
+    } finally {
+      setLoading(false);
+    }
   }, [token]);
 
-  const animateValue = (key, start, end, duration) => {
+  useEffect(() => { fetchStats(); }, [fetchStats]);
+
+  // Animate Values
+  const animateValue = (key, start, end, duration = 800) => {
     const startTime = performance.now();
-    
-    const updateValue = (currentTime) => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      
-      const current = Math.floor(progress * (end - start) + start);
-      setAnimatedValues(prev => ({
-        ...prev,
-        [key]: current
-      }));
-      
-      if (progress < 1) {
-        requestAnimationFrame(updateValue);
-      }
+    const update = (currentTime) => {
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      setAnimatedValues(prev => ({ ...prev, [key]: Math.floor(progress * (end - start) + start) }));
+      if (progress < 1) requestAnimationFrame(update);
     };
-    
-    requestAnimationFrame(updateValue);
+    requestAnimationFrame(update);
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="min-h-[50vh] flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-teal-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading event analytics...</p>
+  if (loading) return (
+    <div className="min-h-[50vh] flex items-center justify-center p-4">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-teal-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading event analytics...</p>
+      </div>
+    </div>
+  );
+
+  if (!stats) return null;
+
+  // Stat Card 
+  const StatCard = ({ title, value, icon: Icon, color, subtitle, className = "" }) => (
+    <div className={`bg-white rounded-xl shadow-md p-4 sm:p-6 border border-very-light-blue ${className} transition-all hover:shadow-lg`}>
+      <div className={`flex items-start justify-between mb-3 sm:mb-4`}>
+        <div className={`p-2 sm:p-3 rounded-full ${color}-text bg-opacity-10`}>
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
         </div>
       </div>
-    );
-  }
-
-  // Error state
-  if (stats?.error) {
-    return (
-      <div className="min-h-[50vh] flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-dark-blue mb-2">Unable to load statistics</h3>
-          <p className="text-gray-600 mb-4">Please check your connection and try again.</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue text-white rounded-lg hover:bg-dark-blue transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Stat Card Component
-  const StatCard = ({ title, value, icon: Icon, color, subtitle, className = "" }) => {
-    const colorMap = {
-      blue: 'text-blue',
-      'light-blue': 'text-light-blue',
-      'teal-blue': 'text-teal-blue',
-      'dark-blue': 'text-dark-blue'
-    };
-
-    return (
-      <div className={`bg-white rounded-xl shadow-md p-4 sm:p-6 transition-all duration-300 hover:shadow-lg border border-very-light-blue ${className}`}>
-        <div className="flex items-start justify-between mb-3 sm:mb-4">
-          <div className={`p-2 sm:p-3 rounded-full ${colorMap[color]} bg-opacity-10`}>
-            <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
-          </div>
-        </div>
-        <h3 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 text-dark-blue">
-          {animatedValues[title.toLowerCase().replace(/\s+/g, '')] ?? value}
-        </h3>
-        <p className="text-gray-700 font-medium text-sm sm:text-base">{title}</p>
-        {subtitle && (
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">{subtitle}</p>
-        )}
-      </div>
-    );
-  };
+      <h3 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 text-dark-blue">
+        {animatedValues[title.toLowerCase().replace(/\s+/g, '')] ?? value}
+      </h3>
+      <p className="text-gray-700 font-medium text-sm sm:text-base">{title}</p>
+      {subtitle && <p className="text-xs sm:text-sm text-gray-500 mt-1">{subtitle}</p>}
+    </div>
+  );
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 space-y-6 md:space-y-8 bg-gradient-to-br from-very-light-blue/5 to-blue/5 min-h-screen">
-      {/* Header */}
+    <div className="p-4 md:p-6 space-y-6 md:space-y-8 bg-gradient-to-br from-very-light-blue/5 to-blue/5 min-h-screen">
       <div className="text-center mb-6 md:mb-8">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue to-teal-blue bg-clip-text text-transparent">
-          Event Analytics
+          Analytics
         </h1>
         <p className="text-gray-600 text-sm sm:text-base mt-1 md:mt-2">
-          Real-time insights into your event performance
+          Real-time insights into the event performance
         </p>
       </div>
-
-      {/* Key Metrics Grid - Responsive */}
-     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-        <StatCard
-          title="Total Events"
-          value={stats.totalEvents}
-          icon={Calendar}
-          color="blue"
-          subtitle="All time"
-        />
-        
-        <StatCard
-          title="Upcoming"
-          value={stats.upcomingEvents}
-          icon={Target}
-          color="light-blue"
-          subtitle="Ready to launch"
-        />
-        
-        <StatCard
-          title="Success Rate"
-          value={`${stats.successRate}%`}
-          icon={Award}
-          color="teal-blue"
-          subtitle="Events with >20 RSVPs"
-          className="sm:col-span-2 lg:col-span-1"
-        />
-        
-        <StatCard
-          title="Avg RSVPs"
-          value={stats.avgRsvpsPerEvent}
-          icon={Users}
-          color="dark-blue"
-          subtitle="Per event"
-          className="sm:col-span-2 lg:col-span-1"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Total Events" value={stats.totalEvents} icon={Calendar} color="blue" subtitle="All time" />
+        <StatCard title="Upcoming" value={stats.upcomingEvents} icon={Target} color="light-blue" subtitle="Ready to launch" />
+        <StatCard title="Success Rate" value={`${stats.successRate}%`} icon={Award} color="teal-blue" subtitle="Events with >20 RSVPs" />
+        <StatCard title="Avg RSVPs" value={stats.avgRsvpsPerEvent} icon={Users} color="dark-blue" subtitle="Per event" />
       </div>
 
       {/* Main Dashboard - Responsive Layout */}
@@ -326,7 +243,7 @@ const calculateStats = (events, rsvps) => {
                     <h3 className="text-lg sm:text-xl font-bold">Star Event</h3>
                   </div>
                   <h4 className="text-lg sm:text-xl md:text-2xl font-bold line-clamp-2">
-                    {stats.mostPopularEvent?.title || "No events yet"}
+                    {stats.mostPopularEvent?.Title || "No events yet"}
                   </h4>
                 </div>
                 <div className="text-right">
@@ -337,7 +254,7 @@ const calculateStats = (events, rsvps) => {
                 </div>
               </div>
               <p className="text-very-light-blue opacity-90 text-sm md:text-base line-clamp-2">
-                {stats.mostPopularEvent?.description?.slice(0, 80) || "Start creating events to see analytics"}
+                {stats.mostPopularEvent?.Description?.slice(0, 80) || "Start creating events to see analytics"}
               </p>
             </div>
           </div>
@@ -413,7 +330,7 @@ const calculateStats = (events, rsvps) => {
               {stats.recentEvents.length > 0 ? (
                 stats.recentEvents.map((event, index) => (
                   <div 
-                    key={event.id || index} 
+                    key={event.EventID}
                     className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-very-light-blue/10 transition-colors"
                   >
                     <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-blue text-white rounded-lg mr-2 sm:mr-3 font-bold text-sm sm:text-base">
@@ -421,7 +338,7 @@ const calculateStats = (events, rsvps) => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-dark-blue truncate text-sm sm:text-base">
-                        {event.title}
+                        {event.Title}
                       </h4>
                       <p className="text-gray-500 text-xs sm:text-sm">
                         {new Date(event.StartDateTime).toLocaleDateString()}

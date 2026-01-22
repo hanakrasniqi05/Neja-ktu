@@ -11,7 +11,7 @@ import AdminStatistics from "../sections/DashboardStats";
 import { Menu } from "lucide-react";
 
 export default function AdminDashboard() {
-  const [currentPage, setCurrentPage] = useState("pending");
+  const [currentPage, setCurrentPage] = useState("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Render content based on current page
