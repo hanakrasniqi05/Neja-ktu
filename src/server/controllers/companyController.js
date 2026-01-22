@@ -233,3 +233,146 @@ exports.getTopCompanies = async (req, res) => {
     });
   }
 };
+exports.getCompanyProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const [company] = await pool.query(
+      `SELECT 
+        id,
+        user_id,
+        company_name,
+        description,
+        business_registration_number,
+        company_email,
+        phone_number,
+        address,
+        website,
+        logo_path,
+        verification_status
+       FROM companies 
+       WHERE user_id = ?`,
+      [userId]
+    );
+
+    if (company.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Company not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: company[0]
+    });
+  } catch (error) {
+    console.error('Error fetching company profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching company profile',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+exports.updateCompanyProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const {
+      company_name,
+      description,
+      address,
+      website,
+      phone_number
+    } = req.body;
+
+    const logoFile = req.file ? req.file.filename : null;
+    const logoPath = logoFile ? `/uploads/${logoFile}` : undefined;
+
+    // Check if company exists
+    const [company] = await pool.query(
+      'SELECT id FROM companies WHERE user_id = ?',
+      [userId]
+    );
+
+    if (company.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Company not found'
+      });
+    }
+
+    // Build dynamic update query
+    const updates = [];
+    const values = [];
+
+    if (company_name) {
+      updates.push('company_name = ?');
+      values.push(company_name);
+    }
+    if (description !== undefined) {
+      updates.push('description = ?');
+      values.push(description);
+    }
+    if (address !== undefined) {
+      updates.push('address = ?');
+      values.push(address);
+    }
+    if (website !== undefined) {
+      updates.push('website = ?');
+      values.push(website);
+    }
+    if (phone_number !== undefined) {
+      updates.push('phone_number = ?');
+      values.push(phone_number);
+    }
+    if (logoPath) {
+      updates.push('logo_path = ?');
+      values.push(logoPath);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No fields to update'
+      });
+    }
+
+    values.push(userId);
+
+    await pool.query(
+      `UPDATE companies SET ${updates.join(', ')} WHERE user_id = ?`,
+      values
+    );
+
+    // Get updated company data
+    const [updatedCompany] = await pool.query(
+      `SELECT 
+        id,
+        company_name,
+        description,
+        phone_number,
+        address,
+        website,
+        logo_path,
+        verification_status
+       FROM companies WHERE user_id = ?`,
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Company profile updated successfully',
+      data: updatedCompany[0]
+    });
+
+  } catch (error) {
+    console.error('Error updating company profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error updating company profile',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};

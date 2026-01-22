@@ -6,7 +6,9 @@ const {
   registerCompany,
   getPendingCompanies,
   verifyCompany,
-  getTopCompanies
+  getTopCompanies,
+  getCompanyProfile,
+  updateCompanyProfile
 } = require('../controllers/companyController');
 const { protect, adminOnly, verifyCompanyVerified } = require('../middleware/authMiddleware');
 
@@ -17,13 +19,20 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Public routes
 router.post('/register', upload.single('logo_path'), registerCompany);
-router.get('/pending', protect, adminOnly, getPendingCompanies);
-router.patch('/:id/verify', protect, adminOnly, verifyCompany);
+router.get('/top', getTopCompanies);
+
+// Protected routes
+router.get('/me', protect, verifyCompanyVerified, getCompanyProfile);  // ADD THIS
+router.put('/me', protect, verifyCompanyVerified, upload.single('logo'), updateCompanyProfile);  // ADD THIS
+
 router.get('/dashboard', protect, verifyCompanyVerified, (req, res) => {
   res.json({ success: true, message: "Welcome to your company dashboard" });
 });
 
-router.get('/top', getTopCompanies);
+// Admin-only routes
+router.get('/pending', protect, adminOnly, getPendingCompanies);
+router.patch('/:id/verify', protect, adminOnly, verifyCompany);
 
 module.exports = router;
