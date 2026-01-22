@@ -49,6 +49,8 @@ export const companyAPI = {
   registerCompany: (formData) => api.post('/companies/signup', formData),
   getPendingCompanies: () => api.get('/companies/pending'),
   verifyCompany: (id) => api.patch(`/companies/verify/${id}`),
+    getCompanyProfile: () => api.get('/companies/me'),
+  updateCompanyProfile: (formData) => api.put('/companies/me', formData),
 };
 
 export const commentAPI = {
