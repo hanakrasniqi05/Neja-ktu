@@ -21,6 +21,8 @@ export default function AllCompanies() {
   }, []);
 
   const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this company?")) return;
+    
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`http://localhost:5000/api/admin/companies/${id}`, {
@@ -52,16 +54,23 @@ export default function AllCompanies() {
 
   return (
   <div className="p-4 md:p-6 w-full">
-    <h2 className="text-xl font-bold mb-4 md:mb-6">All Companies</h2>
-      <div className="overflow-x-auto rounded-lg border border-gray-300 bg-white">
+    <div className="flex justify-between items-center mb-4 md:mb-6">
+      <h2 className="text-xl font-bold">All Companies</h2>
+      <div className="text-sm text-gray-500 md:hidden">
+        Showing {companies.length} companies
+      </div>
+    </div>
+      
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-300 bg-white">
         <table className="w-full">
           <thead className="bg-gray-200">
             <tr>
-              <th className="py-3 px-4 text-left font-semibold min-w-[80px]">Logo</th>
-              <th className="py-3 px-4 text-left font-semibold min-w-[120px]">Name</th>
-              <th className="py-3 px-4 text-left font-semibold min-w-[100px]">Status</th>
-              <th className="py-3 px-4 text-left font-semibold min-w-[100px]">Date Added</th>
-              <th className="py-3 px-4 text-left font-semibold min-w-[200px]">Actions</th>
+              <th className="py-3 px-4 text-left font-semibold">Logo</th>
+              <th className="py-3 px-4 text-left font-semibold">Name</th>
+              <th className="py-3 px-4 text-left font-semibold">Status</th>
+              <th className="py-3 px-4 text-left font-semibold">Date Added</th>
+              <th className="py-3 px-4 text-left font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -73,29 +82,18 @@ export default function AllCompanies() {
               </tr>
             ) : (
               companies.map((company) => (
-                <tr
-                  key={company.id}
-                  className="border-b hover:bg-gray-50"
-                >
-                  {/* Logo */}
+                <tr key={company.id} className="border-b hover:bg-gray-50">
                   <td className="py-3 px-4">
                     <img
                       src={company.logo_path || "https://via.placeholder.com/48"}
                       alt={company.company_name}
-                      className="w-10 h-10 md:w-12 md:h-12 object-contain rounded"
+                      className="w-10 h-10 object-contain rounded"
                     />
                   </td>
-
-                  {/* Name */}
                   <td className="py-3 px-4 font-medium">
-                    <div className="font-medium">{company.company_name}</div>
-                    <div className="text-sm text-gray-500 md:hidden">
-                      {company.verification_status}
-                    </div>
+                    {company.company_name}
                   </td>
-
-                  {/* Status - Hidden on mobile, shown in name column */}
-                  <td className="py-3 px-4 hidden md:table-cell">
+                  <td className="py-3 px-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       company.verification_status === 'verified' ? 'bg-green-100 text-green-800' :
                       company.verification_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
@@ -104,35 +102,24 @@ export default function AllCompanies() {
                       {company.verification_status}
                     </span>
                   </td>
-
-                  {/* Date */}
                   <td className="py-3 px-4">
-                    <div className="text-sm">
-                      {company.created_at
-                        ? new Date(company.created_at).toLocaleDateString()
-                        : "N/A"}
-                    </div>
+                    {company.created_at
+                      ? new Date(company.created_at).toLocaleDateString()
+                      : "N/A"}
                   </td>
-
-                  {/* Actions */}
                   <td className="py-3 px-4">
-                    <div className="flex flex-col md:flex-row gap-2">
-                      {/* Status dropdown */}
+                    <div className="flex gap-2">
                       <select
                         value={company.verification_status}
-                        onChange={(e) =>
-                          handleStatusUpdate(company.id, e.target.value)
-                        }
-                        className="border px-3 py-2 rounded text-sm w-full md:w-auto"
+                        onChange={(e) => handleStatusUpdate(company.id, e.target.value)}
+                        className="border px-3 py-1.5 rounded text-sm"
                       >
                         <option value="pending">Pending</option>
                         <option value="verified">Verified</option>
                         <option value="rejected">Rejected</option>
                       </select>
-
-                      {/* Delete button */}
                       <button
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm transition-colors w-full md:w-auto"
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-sm transition-colors"
                         onClick={() => handleDelete(company.id)}
                       >
                         Delete
@@ -146,9 +133,66 @@ export default function AllCompanies() {
         </table>
       </div>
       
-      {/* Mobile Stats */}
-      <div className="md:hidden mt-4 text-sm text-gray-600">
-        <p>Showing {companies.length} companies</p>
+      <div className="md:hidden space-y-4">
+        {companies.length === 0 ? (
+          <div className="py-8 text-center text-gray-500 border rounded-lg bg-white">
+            No companies found
+          </div>
+        ) : (
+          companies.map((company) => (
+            <div key={company.id} className="bg-white border rounded-lg p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src={company.logo_path || "https://via.placeholder.com/48"}
+                    alt={company.company_name}
+                    className="w-12 h-12 object-contain rounded"
+                  />
+                  <div>
+                    <h3 className="font-medium">{company.company_name}</h3>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        company.verification_status === 'verified' ? 'bg-green-100 text-green-800' :
+                        company.verification_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {company.verification_status}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {company.created_at
+                          ? new Date(company.created_at).toLocaleDateString()
+                          : "N/A"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="border-t pt-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Status:</span>
+                    <select
+                      value={company.verification_status}
+                      onChange={(e) => handleStatusUpdate(company.id, e.target.value)}
+                      className="border px-3 py-1.5 rounded text-sm"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="verified">Verified</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+                  <button
+                    className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm transition-colors"
+                    onClick={() => handleDelete(company.id)}
+                  >
+                    Delete Company
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
