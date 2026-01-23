@@ -376,3 +376,55 @@ exports.updateCompanyProfile = async (req, res) => {
     });
   }
 };
+
+exports.deleteCompanyAccount = async (req, res) => {
+  let connection;
+  try {
+    const userId = req.user.id;
+
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    // Check if company exists
+    const [company] = await connection.query(
+      'SELECT id FROM companies WHERE user_id = ?',
+      [userId]
+    );
+
+    if (company.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Company not found'
+      });
+    }
+
+    // Delete company
+    await connection.query(
+      'DELETE FROM companies WHERE user_id = ?',
+      [userId]
+    );
+
+    // Delete user
+    await connection.query(
+      'DELETE FROM user WHERE UserId = ?',
+      [userId]
+    );
+
+    await connection.commit();
+
+    res.json({
+      success: true,
+      message: 'Company account deleted successfully'
+    });
+
+  } catch (error) {
+    if (connection) await connection.rollback();
+    console.error('Error deleting company account:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error deleting account'
+    });
+  } finally {
+    if (connection) connection.release();
+  }
+};

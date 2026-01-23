@@ -161,6 +161,44 @@ export default function CDAccountSettings() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+  const confirmDelete = window.confirm(
+    "⚠️ This will permanently delete your company account. This action cannot be undone. Continue?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(
+      "http://localhost:5000/api/companies/me",
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert("Your company account has been deleted.");
+
+      // Clear auth + redirect
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    } else {
+      setErrorMessage(data.message || "Failed to delete account");
+    }
+
+  } catch (error) {
+    console.error(error);
+    setErrorMessage("Server error deleting account");
+  }
+};
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -329,6 +367,21 @@ export default function CDAccountSettings() {
               </span>
             ) : "Save Changes"}
           </button>
+        </div>
+        <div className="mt-8 p-4 border border-red-200 bg-red-50 rounded-lg">
+          <h3 className="text-lg font-semibold text-red-700 mb-2">
+            Delete Company Account
+          </h3>
+
+            <p className="text-sm text-red-600 mb-4">
+              Deleting your account is permanent and cannot be undone.
+            </p>
+
+            <button
+               onClick={handleDeleteAccount}
+               className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">
+               Delete 
+            </button>
         </div>
       </form>
       <div className="mt-8 p-4 bg-blue-50 rounded-lg">

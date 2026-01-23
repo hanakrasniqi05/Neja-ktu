@@ -8,7 +8,8 @@ const {
   verifyCompany,
   getTopCompanies,
   getCompanyProfile,
-  updateCompanyProfile
+  updateCompanyProfile,
+  deleteCompanyAccount
 } = require('../controllers/companyController');
 const { protect, adminOnly, verifyCompanyVerified } = require('../middleware/authMiddleware');
 
@@ -34,5 +35,7 @@ router.get('/dashboard', protect, verifyCompanyVerified, (req, res) => {
 // Admin-only routes
 router.get('/pending', protect, adminOnly, getPendingCompanies);
 router.patch('/:id/verify', protect, adminOnly, verifyCompany);
+
+router.delete('/me', protect, verifyCompanyVerified, deleteCompanyAccount);
 
 module.exports = router;
