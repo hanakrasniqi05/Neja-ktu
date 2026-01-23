@@ -95,7 +95,7 @@ export default function Header({ onOpenEditProfile }) {
             {isLoggedIn ? (
               <div className="relative" ref={dropdownRef}>
                 <button
-                  onClick={() => setDropdownOpen((p) => !p)}
+                  onClick={() => setDropdownOpen(p => !p)}
                   className="flex items-center text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-medium"
                 >
                   {userData?.firstName || "User"}
@@ -126,8 +126,6 @@ export default function Header({ onOpenEditProfile }) {
                         </button>
                       </li>
                       <li>
-                      </li>
-                      <li>
                         <button
                           onClick={() => {
                             setDropdownOpen(false);
@@ -143,101 +141,62 @@ export default function Header({ onOpenEditProfile }) {
                 </AnimatePresence>
               </div>
             ) : (
-              <Link
-                to="/sign-up"
-                className="hover:bg-blue-700 text-white px-8 py-3 rounded-md text-lg font-medium transition-colors"
-                style={{ backgroundColor: "#00B4D8" }}
-              >
-                Sign Up
-              </Link>
+              <>
+                <Link
+                  to="/login"
+                  className="border-2 border-blue text-blue px-8 py-3 rounded-md text-lg font-medium transition-colors"
+                  style={{ backgroundColor: "#ffffff" }}
+                >
+                  Log In
+                </Link>
+
+                <Link
+                  to="/sign-up"
+                  className="text-white px-8 py-3 rounded-md text-lg font-medium transition-colors"
+                  style={{ backgroundColor: "#00B4D8" }}
+                >
+                  Sign Up
+                </Link>
+              </>
             )}
           </div>
+
           <div className="md:hidden flex items-center">
-            <button
-              onClick={toggleMenu}
-              className="text-gray-800 hover:text-dark-blue focus:outline-none"
-              aria-label="Toggle menu"
-            >
+            <button onClick={toggleMenu} className="focus:outline-none">
               <div className="w-8 space-y-2">
-                <motion.span
-                  animate={{ rotate: isOpen ? 45 : 0, y: isOpen ? 8 : 0 }}
-                  className="block h-1 w-full bg-blue rounded"
-                />
-                <motion.span
-                  animate={{ opacity: isOpen ? 0 : 1 }}
-                  className="block h-1 w-full bg-blue rounded"
-                />
-                <motion.span
-                  animate={{ rotate: isOpen ? -45 : 0, y: isOpen ? -8 : 0 }}
-                  className="block h-1 w-full bg-blue rounded"
-                />
+                <motion.span animate={{ rotate: isOpen ? 45 : 0, y: isOpen ? 8 : 0 }} className="block h-1 bg-blue rounded" />
+                <motion.span animate={{ opacity: isOpen ? 0 : 1 }} className="block h-1 bg-blue rounded" />
+                <motion.span animate={{ rotate: isOpen ? -45 : 0, y: isOpen ? -8 : 0 }} className="block h-1 bg-blue rounded" />
               </div>
             </button>
           </div>
         </div>
+
         <AnimatePresence>
           {isOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-              className="md:hidden overflow-hidden"
+              className="md:hidden"
             >
               <div className="flex flex-col space-y-4 pb-4 pt-2">
-                <Link
-                  to="/"
-                  className="text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-medium"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Home
-                </Link>
-                <Link
-                  to="/events"
-                  className="text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-medium"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Events
-                </Link>
-                <Link
-                  to="/about-us"
-                  className="text-gray-800 hover:text-dark-blue px-3 py-2 text-lg font-medium"
-                  onClick={() => setIsOpen(false)}
-                >
-                  About Us
-                </Link>
+                <Link to="/" onClick={() => setIsOpen(false)}>Home</Link>
+                <Link to="/events" onClick={() => setIsOpen(false)}>Events</Link>
+                <Link to="/about-us" onClick={() => setIsOpen(false)}>About Us</Link>
 
-                {isLoggedIn ? (
+                {!isLoggedIn && (
                   <>
-                    <button
-                      onClick={() => {
-                        navigate(getDashboardURL());
-                        setIsOpen(false);
-                      }}
-                      className="bg-blue text-white px-6 py-3 rounded hover:bg-blue-700 transition-colors w-11/12 mx-3"
+
+                    <Link
+                      to="/sign-up"
+                      onClick={() => setIsOpen(false)}
+                      className="text-white px-6 py-3 rounded text-center w-11/12 mx-3"
                       style={{ backgroundColor: "#00B4D8" }}
                     >
-                      Dashboard
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsOpen(false);
-                        handleLogout();
-                      }}
-                      className="text-red-600 hover:text-dark-blue px-3 py-2 text-lg text-left"
-                    >
-                      Logout
-                    </button>
+                      Sign Up
+                    </Link>
                   </>
-                ) : (
-                  <Link
-                    to="/sign-up"
-                    className="text-white bg-blue hover:bg-blue-700 px-6 py-3 rounded text-center text-lg font-medium w-11/12 mx-3 transition-colors"
-                    style={{ backgroundColor: "#00B4D8" }}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Sign Up
-                  </Link>
                 )}
               </div>
             </motion.div>
