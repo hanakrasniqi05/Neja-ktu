@@ -37,6 +37,25 @@ export default function CreateEvent({ onCreate }) {
         throw new Error("Title, start date, and end date are required.");
       }
 
+      // Validate year format 
+      const validateYear = (dateTimeString) => {
+        if (!dateTimeString) return true;
+        const year = dateTimeString.split("-")[0];
+
+        if (!/^\d{1,4}$/.test(year)) {
+          throw new Error("Year must be between 1 and 4 digits.");
+        }
+        const yearNum = parseInt(year, 10);
+        if (yearNum < 1 || yearNum > 9999) {
+          throw new Error("Year must be between 1 and 9999.");
+        }
+        return true;
+      };
+
+      // Validate both dates
+      validateYear(form.startDateTime);
+      validateYear(form.endDateTime);
+
       const now = new Date();
       const start = new Date(form.startDateTime);
       const end = new Date(form.endDateTime);
@@ -154,6 +173,8 @@ export default function CreateEvent({ onCreate }) {
               name="startDateTime"
               value={form.startDateTime}
               onChange={handleChange}
+              min="1000-01-01T00:00"
+              max="9999-12-31T23:59"
               className="w-full border border-gray-300 px-3 py-2 sm:py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent text-sm sm:text-base"
               required
             />
@@ -166,6 +187,8 @@ export default function CreateEvent({ onCreate }) {
               name="endDateTime"
               value={form.endDateTime}
               onChange={handleChange}
+              min="1000-01-01T00:00"
+              max="9999-12-31T23:59"
               className="w-full border border-gray-300 px-3 py-2 sm:py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent text-sm sm:text-base"
               required
             />

@@ -2,6 +2,28 @@ const pool = require('../database.js');
 const fs = require("fs");
 const path = require("path");
 
+// Helper function to validate MySQL DATETIME format and year range
+function validateMySQLDateTime(dateTimeStr) {
+  if (!dateTimeStr) return false;
+  
+  // Check format: YYYY-MM-DD HH:mm:ss
+  const mysqlRegex = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/;
+  if (!mysqlRegex.test(dateTimeStr)) {
+    return false;
+  }
+  
+  const match = dateTimeStr.match(mysqlRegex);
+  const year = parseInt(match[1], 10);
+  
+  if (year < 1000 || year > 9999) {
+    return false;
+  }
+  
+  // Additional date validation
+  const date = new Date(dateTimeStr.replace(' ', 'T') + 'Z');
+  return !isNaN(date.getTime());
+}
+
 // Folderi ku multer ruan skedarët
 const uploadFolder = path.join(__dirname, "..", "..", "uploads");
 
@@ -52,6 +74,24 @@ const createEvent = async (req, res) => {
       return res.status(400).json({ 
         success: false, 
         message: 'Title, description, location, start date and end date are required' 
+      });
+    }
+
+    // Validate date formats and year range
+    if (!validateMySQLDateTime(startDateTime) || !validateMySQLDateTime(endDateTime)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format. Year must be between 1000 and 9999.",
+      });
+    }
+
+    // Ensure end date is after start date
+    const startDate = new Date(startDateTime.replace(' ', 'T'));
+    const endDate = new Date(endDateTime.replace(' ', 'T'));
+    if (endDate <= startDate) {
+      return res.status(400).json({
+        success: false,
+        message: "End date must be after start date.",
       });
     }
 
@@ -257,6 +297,24 @@ const updateEvent = async (req, res) => {
       return res.status(400).json({ 
         success: false, 
         message: 'All required fields must be provided' 
+      });
+    }
+
+    // Validate date formats and year range
+    if (!validateMySQLDateTime(startDateTime) || !validateMySQLDateTime(endDateTime)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format. Year must be between 1000 and 9999.",
+      });
+    }
+
+    // Ensure end date is after start date
+    const startDate = new Date(startDateTime.replace(' ', 'T'));
+    const endDate = new Date(endDateTime.replace(' ', 'T'));
+    if (endDate <= startDate) {
+      return res.status(400).json({
+        success: false,
+        message: "End date must be after start date.",
       });
     }
 
