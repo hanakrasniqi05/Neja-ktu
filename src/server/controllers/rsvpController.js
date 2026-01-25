@@ -132,13 +132,44 @@ exports.getRSVPsByEvent = async (req, res) => {
   const { eventId } = req.params;
 
   try {
+    const [eventCheck] = await pool.query(
+      'SELECT EventID, Title FROM events WHERE EventID = ?', 
+      [eventId]
+    );
+    
+    if (eventCheck.length === 0) {
+      console.log(`Event ${eventId} not found`);
+      return res.json({ success: true, count: 0, data: [] });
+    }
+    
+    console.log(`Event found: ${eventCheck[0].Title}`);
     const [rows] = await pool.query(`
-      SELECT r.rsvp_id AS rsvp_id, r.user_id, r.status, r.rsvp_date, u.name AS user_name, u.email AS user_email
+      SELECT 
+        r.rsvp_id,
+        r.user_id,
+        r.status,
+        r.rsvp_date,
+        u.UserId,
+        u.FirstName,
+        u.LastName,
+        u.Email,
+        CONCAT(u.FirstName, ' ', u.LastName) AS user_name,
+        u.Email AS user_email
       FROM rsvp r
-      JOIN user u ON r.user_id = u.id
+      INNER JOIN user u ON r.user_id = u.UserId
       WHERE r.event_id = ?
       ORDER BY r.rsvp_date DESC
     `, [eventId]);
+
+    if (rows.length > 0) {
+      console.log("Sample RSVP data:", {
+        rsvp_id: rows[0].rsvp_id,
+        user_id: rows[0].user_id,
+        user_name: rows[0].user_name,
+        user_email: rows[0].user_email,
+        status: rows[0].status
+      });
+    }
 
     res.json({ success: true, count: rows.length, data: rows });
   } catch (err) {
