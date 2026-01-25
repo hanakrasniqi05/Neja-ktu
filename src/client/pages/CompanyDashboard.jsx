@@ -7,12 +7,14 @@ import CreateEvent from "../sections/CDCreateEvent";
 import AccountSettings from "../sections/CDAccountSettings";
 
 import { companyEventAPI } from "../../services/api";
+import { Menu } from "lucide-react";
 
 export default function CompanyDashboard() {
   const [activePage, setActivePage] = useState("myEvents");
   const [events, setEvents] = useState([]);
   
   const [error, setError] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -32,140 +34,140 @@ export default function CompanyDashboard() {
 
   //Handle event creation
   const handleCreate = async (formData) => {
-  try {
-    console.log('Creating event with data:', formData);
-    
-    const token = localStorage.getItem('token');
-    console.log('Token exists:', !!token);
-    
-    const res = await companyEventAPI.createEvent(formData);
-    console.log('API Response:', res.data);
-    
-    if (res.data.success) {
-      // Refresh the events list
-      await fetchEvents();
-      
-      setActivePage("myEvents");
-      alert("Event created successfully!");
-    } else {
-      throw new Error(res.data.message || 'Failed to create event');
+    try {
+      const res = await companyEventAPI.createEvent(formData);
+      if (res.data.success) {
+        await fetchEvents();
+        setActivePage("myEvents");
+        alert("Event created successfully!");
+      } else {
+        throw new Error(res.data.message || "Failed to create event");
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || err.message || "Failed to create event");
     }
-  } catch (err) {
-    console.error('Error creating event:', err);
-    console.error('Full error:', err.response?.data || err.message);
-    
-    let errorMessage = 'Failed to create event';
-    if (err.response?.data?.message) {
-      errorMessage = err.response.data.message;
-    } else if (err.message) {
-      errorMessage = err.message;
-    }
-    
-    alert(`Error: ${errorMessage}`);
-  }
-};
+  };
 
   // Handle event update
   const handleUpdate = async (id, formData) => {
-  try {
-    const res = await companyEventAPI.updateEvent(id, formData);
-    
-    // Update local list
-    setEvents(events.map(ev => 
-      ev.EventID === id ? { ...ev, ...res.data.event } : ev
-    ));
-    
-    alert("Event updated successfully!");
-  } catch (err) {
-    console.error('Error updating event:', err);
-    alert(err.response?.data?.message || "Failed to update event");
-  }
-};
+    try {
+      const res = await companyEventAPI.updateEvent(id, formData);
+      setEvents(events.map(ev => ev.EventID === id ? { ...ev, ...res.data.event } : ev));
+      alert("Event updated successfully!");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to update event");
+    }
+  };
 
   // Handle event deletion
 const handleDelete = async (id) => {
-  if (!window.confirm("Are you sure you want to delete this event? This action cannot be undone.")) {
-    return;
-  }
+    if (!window.confirm("Are you sure you want to delete this event?")) return;
+    try {
+      await companyEventAPI.deleteEvent(id);
+      setEvents(events.filter(e => e.EventID !== id));
+      alert("Event deleted successfully!");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete event");
+    }
+  };
 
-  try {
-    await companyEventAPI.deleteEvent(id);
-    
-    // Remove from local list
-    setEvents(events.filter(e => e.EventID !== id));
-    
-    alert("Event deleted successfully!");
-  } catch (err) {
-    console.error('Error deleting event:', err);
-    alert(err.response?.data?.message || "Failed to delete event");
-  }
-};
+  const renderPage = () => {
+    switch (activePage) {
+      case "myEvents":
+        return <MyEvents events={events} onDelete={handleDelete} onUpdate={handleUpdate} />;
+      case "createEvent":
+        return <CreateEvent onCreate={handleCreate} />;
+      case "settings":
+        return <AccountSettings />;
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="flex h-screen font-sans">
-      <aside className="w-1/4 bg-sky-200 p-6 flex flex-col">
+    <div className="flex min-h-screen">
+
+      {/* Mobile Top Bar */}
+      <div className="md:hidden bg-teal-blue text-white p-4 flex items-center justify-between fixed top-0 left-0 right-0 z-50">
+        <div className="flex items-center">
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="mr-3 p-2 hover:bg-blue/30 rounded-lg">
+            <Menu size={24} />
+          </button>
+          <h1 className="text-lg font-bold">Company Dashboard</h1>
+        </div>
+      </div>
+
+      {/* Sidebar */}
+      <div className={`
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        md:translate-x-0 fixed top-0 left-0 z-40 h-screen w-64
+        transition-transform duration-300 ease-in-out
+        bg-teal-blue text-white p-6 flex flex-col
+      `}>
         <a href="/" className="flex items-center mb-6 hover:opacity-80">
           <img src={logo} alt="Company Logo" className="h-10 mr-3 rounded-full" />
           <span className="text-lg font-bold">Back to Home</span>
         </a>
-        <h1 className="text-xl font-bold text-sky-900 mb-8">Company Dashboard</h1>
+
+        <h1 className="text-xl font-bold mb-8">Company Dashboard</h1>
+
         <nav className="flex flex-col gap-2">
           <button
-            onClick={() => setActivePage("myEvents")}
-            className={`px-3 py-2 rounded ${
+            onClick={() => { setActivePage("myEvents"); setIsSidebarOpen(false); }}
+            className={`px-3 py-2 rounded-lg transition ${
               activePage === "myEvents"
-                ? "bg-white text-sky-800 font-semibold shadow"
-                : "hover:bg-sky-300"
+                ? "bg-white text-teal-blue font-semibold shadow"
+                : "hover:bg-blue/30"
             }`}
           >
             My Events
           </button>
+
           <button
-            onClick={() => setActivePage("createEvent")}
-            className={`px-3 py-2 rounded ${
+            onClick={() => { setActivePage("createEvent"); setIsSidebarOpen(false); }}
+            className={`px-3 py-2 rounded-lg transition ${
               activePage === "createEvent"
-                ? "bg-white text-sky-800 font-semibold shadow"
-                : "hover:bg-sky-300"
+                ? "bg-white text-teal-blue font-semibold shadow"
+                : "hover:bg-blue/30"
             }`}
           >
             Create New Event
           </button>
+
           <button
-            onClick={() => setActivePage("settings")}
-            className={`px-3 py-2 rounded ${
+            onClick={() => { setActivePage("settings"); setIsSidebarOpen(false); }}
+            className={`px-3 py-2 rounded-lg transition ${
               activePage === "settings"
-                ? "bg-white text-sky-800 font-semibold shadow"
-                : "hover:bg-sky-300"
+                ? "bg-white text-teal-blue font-semibold shadow"
+                : "hover:bg-blue/30"
             }`}
           >
-            Account Setting
+            Account Settings
           </button>
         </nav>
-      </aside>
-      <main className="flex-1 p-10 bg-white">
-        
+      </div>
+
+      {/* Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 md:ml-64 min-h-screen w-full bg-gray-100 pt-16 md:pt-0 p-6">
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
-            <button 
-              onClick={fetchEvents}
-              className="ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-            >
+            <button onClick={fetchEvents} className="ml-4 bg-red-500 text-white px-3 py-1 rounded">
               Retry
             </button>
           </div>
         )}
 
-        {activePage === "myEvents" && (
-          <MyEvents 
-            events={events} 
-            onDelete={handleDelete} 
-            onUpdate={handleUpdate} 
-          />
-        )}
-        {activePage === "createEvent" && <CreateEvent onCreate={handleCreate} />}
-        {activePage === "settings" && <AccountSettings />}
-      </main>
+        {renderPage()}
+      </div>
     </div>
   );
 }

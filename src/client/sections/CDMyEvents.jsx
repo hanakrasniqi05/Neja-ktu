@@ -39,20 +39,20 @@ export default function MyEvents({ events, onDelete, onUpdate }) {
   };
 
   return (
-    <div className="p-6 w-full">
-      <h2 className="text-xl font-bold mb-6">My Events</h2>
+    <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
+      <h2 className="text-xl sm:text-2xl font-bold mb-6 text-gray-800">My Events</h2>
 
       {events.length === 0 ? (
-        <p>No events created yet.</p>
+        <p className="text-gray-600 text-center py-8 sm:py-12 text-sm sm:text-base">No events created yet.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
           {events.map((ev) => (
             <div
               key={ev.EventID}
-              className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col"
+              className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden flex flex-col h-full border border-gray-100"
             >
               {/* Event Image */}
-              <div className="h-40 w-full">
+              <div className="h-40 sm:h-48 w-full">
                 <img
                   src={
                     ev.Image?.startsWith("http")
@@ -61,48 +61,53 @@ export default function MyEvents({ events, onDelete, onUpdate }) {
                   }
                   alt={ev.Title}
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               </div>
 
               {/* Card Body */}
-              <div className="p-6 flex-1 flex flex-col">
+              <div className="p-4 sm:p-5 flex-1 flex flex-col">
                 {editingId === ev.EventID ? (
-                  <div className="space-y-2">
+                  <div className="space-y-2 sm:space-y-3">
                     <input
                       value={editData.title}
                       onChange={(e) =>
                         setEditData({ ...editData, title: e.target.value })
                       }
-                      className="w-full border px-2 py-1 rounded"
+                      className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500"
+                      placeholder="Event title"
                     />
-                    <input
-                      type="datetime-local"
-                      value={editData.startDateTime}
-                      onChange={(e) =>
-                        setEditData({
-                          ...editData,
-                          startDateTime: e.target.value,
-                        })
-                      }
-                      className="w-full border px-2 py-1 rounded"
-                    />
-                    <input
-                      type="datetime-local"
-                      value={editData.endDateTime}
-                      onChange={(e) =>
-                        setEditData({
-                          ...editData,
-                          endDateTime: e.target.value,
-                        })
-                      }
-                      className="w-full border px-2 py-1 rounded"
-                    />
+                    <div className="grid grid-cols-1 gap-2">
+                      <input
+                        type="datetime-local"
+                        value={editData.startDateTime}
+                        onChange={(e) =>
+                          setEditData({
+                            ...editData,
+                            startDateTime: e.target.value,
+                          })
+                        }
+                        className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500"
+                      />
+                      <input
+                        type="datetime-local"
+                        value={editData.endDateTime}
+                        onChange={(e) =>
+                          setEditData({
+                            ...editData,
+                            endDateTime: e.target.value,
+                          })
+                        }
+                        className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500"
+                      />
+                    </div>
                     <input
                       value={editData.location}
                       onChange={(e) =>
                         setEditData({ ...editData, location: e.target.value })
                       }
-                      className="w-full border px-2 py-1 rounded"
+                      className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500"
+                      placeholder="Location"
                     />
                     <textarea
                       value={editData.description}
@@ -112,18 +117,19 @@ export default function MyEvents({ events, onDelete, onUpdate }) {
                           description: e.target.value,
                         })
                       }
-                      className="w-full border px-2 py-1 rounded"
+                      className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500 resize-y min-h-[80px]"
+                      placeholder="Description"
                     />
                     <div className="flex gap-2 mt-2">
                       <button
                         onClick={handleSave}
-                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                        className="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition text-sm font-medium"
                       >
                         Save
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500"
+                        className="flex-1 bg-gray-400 text-white px-3 py-2 rounded-lg hover:bg-gray-500 transition text-sm font-medium"
                       >
                         Cancel
                       </button>
@@ -131,21 +137,21 @@ export default function MyEvents({ events, onDelete, onUpdate }) {
                   </div>
                 ) : (
                   <>
-                    <p className="text-gray-500 text-sm font-medium mb-1">
+                    <p className="text-gray-500 text-xs sm:text-sm font-medium mb-1">
                       {new Date(ev.StartDateTime).toLocaleString()} -{" "}
                       {new Date(ev.EndDateTime).toLocaleString()}
                     </p>
 
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2 line-clamp-1">
                       {ev.Title}
                     </h3>
 
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3 flex-1">
                       {ev.Description}
                     </p>
 
-                    <div className="space-y-2 text-sm text-gray-700">
-                      <p>
+                    <div className="space-y-1 text-xs sm:text-sm text-gray-700">
+                      <p className="truncate">
                         <span className="font-medium">📍 Location:</span>{" "}
                         {ev.Location}
                       </p>
@@ -155,13 +161,13 @@ export default function MyEvents({ events, onDelete, onUpdate }) {
                     <div className="mt-4 flex gap-2">
                       <button
                         onClick={() => startEdit(ev)}
-                        className="bg-sky-600 text-white px-3 py-1 rounded hover:bg-sky-700"
+                        className="flex-1 bg-sky-600 text-white px-3 py-2 rounded-lg hover:bg-sky-700 transition text-xs sm:text-sm font-medium"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => onDelete(ev.EventID)}
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                        className="flex-1 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition text-xs sm:text-sm font-medium"
                       >
                         Delete
                       </button>
@@ -171,11 +177,11 @@ export default function MyEvents({ events, onDelete, onUpdate }) {
               </div>
 
               {/* RSVP List */}
-              <div className="p-4 bg-sky-50 border-t">
-                <h4 className="font-bold mb-2 text-sm">
-                  Users who RSVP’d:
+              <div className="p-3 sm:p-4 bg-sky-50 border-t">
+                <h4 className="font-bold mb-2 text-xs sm:text-sm text-gray-700">
+                  Users who RSVP'd:
                 </h4>
-                <div className="max-h-32 overflow-y-auto">
+                <div className="max-h-24 sm:max-h-32 overflow-y-auto">
                   <RsvpList eventId={ev.EventID} />
                 </div>
               </div>
