@@ -80,20 +80,22 @@ export default function CreateEvent({ onCreate }) {
       };
 
       // Create the data object
-      const eventData = {
-        title: form.title,
-        description: form.description,
-        location: form.location,
-        startDateTime: formatDateTime(form.startDateTime),
-        endDateTime: formatDateTime(form.endDateTime),
-        rsvpLimit: form.rsvpLimit || null,
-        category: form.category || null
-      };
-
-      console.log('Sending event data:', eventData);
+      const formData = new FormData();
+      formData.append("title", form.title);
+      formData.append("description", form.description);
+      formData.append("location", form.location);
+      formData.append("startDateTime", formatDateTime(form.startDateTime));
+      formData.append("endDateTime", formatDateTime(form.endDateTime));
+      formData.append("rsvpLimit", form.rsvpLimit || null);
+      formData.append("category", form.category || null);
+      
+      // Only append image if file exists
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
 
       // Send the data
-      await onCreate(eventData);
+      await onCreate(formData);
 
       // Reset form
       setForm({

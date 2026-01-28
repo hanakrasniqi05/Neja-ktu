@@ -67,6 +67,8 @@ const createEvent = async (req, res) => {
       rsvpLimit,
       category 
     } = req.body;
+    
+    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
 
     // Basic validation
     if (!title || !description || !location || !startDateTime || !endDateTime) {
@@ -116,8 +118,8 @@ const createEvent = async (req, res) => {
     // Create the event
     const [result] = await pool.query(
       `INSERT INTO events 
-       (Title, Description, Location, StartDateTime, EndDateTime, RsvpLimit, company_id) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       (Title, Description, Location, StartDateTime, EndDateTime, RsvpLimit, Image, company_id) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title,
         description, 
@@ -125,6 +127,7 @@ const createEvent = async (req, res) => {
         startDateTime, 
         endDateTime, 
         rsvpLimit || null, 
+        imagePath,
         companyId]
     );
 
@@ -164,10 +167,13 @@ const createEvent = async (req, res) => {
     );
 
     res.status(201).json({ 
-      success: true, 
-      message: 'Event created successfully', 
-      event: newEvent[0] 
-    });
+    success: true, 
+    message: 'Event created successfully', 
+    event: {
+      ...newEvent[0],
+    Image: imagePath ? `${req.protocol}://${req.get('host')}${imagePath}` : null
+  }
+});
 
   } catch (error) {
     console.error('Create event error:', error);
@@ -188,7 +194,13 @@ const getEvents = async (req, res) => {
       LEFT JOIN companies c ON e.company_id = c.id
       ORDER BY e.StartDateTime DESC
     `);
-    res.json(rows);
+
+    const eventsWithFullUrls = rows.map(event => ({
+      ...event,
+      Image: event.Image ? `${req.protocol}://${req.get('host')}${event.Image}` : null
+    }));
+
+    res.json(eventsWithFullUrls);
   } catch (error) {
     console.error(error);
     res.status(500).json({ 
@@ -212,7 +224,12 @@ const getPopularEvents = async (req, res) => {
       ORDER BY rsvp_count DESC
       LIMIT 5
     `);
-    res.json(rows);
+
+    const eventsWithFullUrls = rows.map(event => ({
+      ...event,
+      Image: event.Image ? `${req.protocol}://${req.get('host')}${event.Image}` : null
+    }));
+    res.json(eventsWithFullUrls);
   } catch (error) {
     console.error(error);
     res.status(500).json({ 
@@ -249,7 +266,12 @@ const getMyEvents = async (req, res) => {
       [companyId]
     );
     
-    res.json(rows);
+    const eventsWithFullUrls = rows.map(event => ({
+      ...event,
+      Image: event.Image ? `${req.protocol}://${req.get('host')}${event.Image}` : null
+    }));
+    
+    res.json(eventsWithFullUrls);
   } catch (error) {
     console.error(error);
     res.status(500).json({ 
@@ -272,6 +294,8 @@ const updateEvent = async (req, res) => {
       rsvpLimit,
       category 
     } = req.body;
+
+    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
 
     console.log('Update request for event:', eventId);
     console.log('Update data:', req.body);
@@ -322,9 +346,9 @@ const updateEvent = async (req, res) => {
     await pool.query(
       `UPDATE events 
        SET Title = ?, Description = ?, Location = ?, 
-           StartDateTime = ?, EndDateTime = ?, RsvpLimit = ?
+           StartDateTime = ?, EndDateTime = ?, RsvpLimit = ?, Image = ?
        WHERE EventID = ?`,
-      [title, description, location, startDateTime, endDateTime, rsvpLimit || null, eventId]
+      [title, description, location, startDateTime, endDateTime, rsvpLimit || null, imagePath || null, eventId]
     );
 
     // Update categories
@@ -357,10 +381,13 @@ const updateEvent = async (req, res) => {
     );
 
     res.json({ 
-      success: true, 
-      message: 'Event updated successfully', 
-      event: updatedEvent[0] 
-    });
+    success: true, 
+    message: 'Event updated successfully', 
+    event: {
+      ...updatedEvent[0],
+    Image: imagePath ? `${req.protocol}://${req.get('host')}${imagePath}` : (updatedEvent[0].Image ? `${req.protocol}://${req.get('host')}${updatedEvent[0].Image}` : null)
+  }
+});
 
   } catch (error) {
     console.error('Update event error:', error);

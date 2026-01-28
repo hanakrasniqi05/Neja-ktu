@@ -87,8 +87,12 @@ export const eventCategoryAPI = {
 
 export const companyEventAPI = {
   getMyEvents: () => api.get('/company-events/my-events'),
-  createEvent: (data) => api.post('/company-events', data),
-  updateEvent: (id, data) => api.put(`/company-events/${id}`, data),
+  createEvent: (data) => api.post('/company-events', data, {
+      headers: { "Content-Type": "multipart/form-data" } 
+    }),
+  updateEvent: (id, data) => api.put(`/company-events/${id}`, data, {
+      headers: { "Content-Type": "multipart/form-data" } 
+    }),
   deleteEvent: (id) => api.delete(`/company-events/${id}`)
 };
 

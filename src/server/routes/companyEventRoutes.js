@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const upload = require('../middleware/uploads');
 
 const {
   protect,
@@ -20,6 +21,7 @@ router.post(
   '/',
   protect,
   verifyCompanyVerified,
+  upload.single('image'),
   createEvent
 );
 
@@ -36,6 +38,7 @@ router.put(
   '/:id',
   protect,
   verifyCompanyVerified,
+  upload.single('image'),
   updateEvent
 );
 

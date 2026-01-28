@@ -5,8 +5,8 @@ const fs = require("fs");
 // Kontrollo që folderi uploads ekziston
 const uploadDir = path.join(__dirname, "..", "uploads");
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-  console.log("Folder 'uploads' u krijua automatikisht.");
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log("Uploads folder created at:", uploadDir);
 }
 
 // Konfigurimi i storage

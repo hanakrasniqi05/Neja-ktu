@@ -70,6 +70,7 @@ app.use('/api/companies', companyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/rsvps', rsvpRoutes)
 app.use("/api/company-events", companyEventRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // 404 handler
 app.use((req, res) => {
