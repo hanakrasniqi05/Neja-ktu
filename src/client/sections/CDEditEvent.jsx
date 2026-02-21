@@ -10,6 +10,8 @@ export default function EditEvent({ event, onUpdate, onCancel }) {
     rsvpLimit: "",
     category: "",
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -31,8 +33,30 @@ export default function EditEvent({ event, onUpdate, onCancel }) {
         rsvpLimit: event.RsvpLimit || "",
         category: event.Category || "",
       });
+
+      // Set preview if event has image
+      if (event.Image && event.Image !== "null") {
+        setPreview(event.Image.startsWith("http") ? event.Image : 
+          `${window.location.origin}${event.Image}`);
+      }
     }
   }, [event]);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    setImageFile(file);
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    } else {
+      // Reset to original image if no new file
+      if (event.Image && event.Image !== "null") {
+        setPreview(event.Image.startsWith("http") ? event.Image : 
+          `${window.location.origin}${event.Image}`);
+      } else {
+        setPreview(null);
+      }
+    }
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -68,19 +92,33 @@ export default function EditEvent({ event, onUpdate, onCancel }) {
         return datetimeLocal.replace('T', ' ') + ':00';
       };
 
-      // Create data object
-      const eventData = {
-        title: form.title,
-        description: form.description,
-        location: form.location,
-        startDateTime: formatDateTime(form.startDateTime),
-        endDateTime: formatDateTime(form.endDateTime),
-        rsvpLimit: form.rsvpLimit || null,
-        category: form.category || null
-      };
+      // Create FormData instead of JSON
+      const formData = new FormData();
+      formData.append("title", form.title);
+      formData.append("description", form.description);
+      formData.append("location", form.location);
+      formData.append("startDateTime", formatDateTime(form.startDateTime));
+      formData.append("endDateTime", formatDateTime(form.endDateTime));
+      formData.append("category", form.category || "");
+      
+      if (form.rsvpLimit) {
+        formData.append("rsvpLimit", form.rsvpLimit);
+      }
+      
+      // Add image ONLY if there is a new file
+      if (imageFile) {
+        formData.append("image", imageFile);
+        console.log('Will update with new image:', imageFile.name);
+      } else {
+        console.log('No new image - keeping existing image');
+      }
 
-      console.log('Updating event with data:', eventData);
-      await onUpdate(event.EventID, eventData);
+      console.log('Updating event with FormData:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key + ":", key === 'image' ? value.name : value);
+      }
+      
+      await onUpdate(event.EventID, formData);
 
     } catch (err) {
       setError(err.message);
@@ -196,6 +234,31 @@ export default function EditEvent({ event, onUpdate, onCancel }) {
             <option value="Tech">Tech</option>
             <option value="Other">Other</option>
           </select>
+        </div>
+
+        // Add image input
+        <div>
+          <label className="block text-sm font-medium mb-1">Event Image (Optional)</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="w-full border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-sky-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            {imageFile ? `New image selected: ${imageFile.name}` : "Leave empty to keep current image"}
+          </p>
+          
+          {preview && (
+            <div className="mt-3">
+              <p className="text-sm text-gray-600 mb-2">Preview:</p>
+              <img
+                src={preview}
+                alt="Preview"
+                className="w-full max-w-xs h-48 object-cover rounded-lg border shadow-sm"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">

@@ -295,10 +295,8 @@ const updateEvent = async (req, res) => {
       category 
     } = req.body;
 
-    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
-
     console.log('Update request for event:', eventId);
-    console.log('Update data:', req.body);
+    console.log('Has new image file:', !!req.file);
 
     // Find the event and check if it belongs to the logged-in company
     const [eventRows] = await pool.query(
@@ -328,7 +326,7 @@ const updateEvent = async (req, res) => {
     if (!validateMySQLDateTime(startDateTime) || !validateMySQLDateTime(endDateTime)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid date format. Year must be between 1000 and 9999.",
+        message: "Invalid date format.",
       });
     }
 
@@ -342,14 +340,52 @@ const updateEvent = async (req, res) => {
       });
     }
 
-    // Update the event
-    await pool.query(
-      `UPDATE events 
-       SET Title = ?, Description = ?, Location = ?, 
-           StartDateTime = ?, EndDateTime = ?, RsvpLimit = ?, Image = ?
-       WHERE EventID = ?`,
-      [title, description, location, startDateTime, endDateTime, rsvpLimit || null, imagePath || null, eventId]
-    );
+    // Build dynamic query parts
+    const updateFields = [];
+    const updateValues = [];
+
+    // Add basic fields to update
+    updateFields.push("Title = ?");
+    updateValues.push(title);
+    
+    updateFields.push("Description = ?");
+    updateValues.push(description);
+    
+    updateFields.push("Location = ?");
+    updateValues.push(location);
+    
+    updateFields.push("StartDateTime = ?");
+    updateValues.push(startDateTime);
+    
+    updateFields.push("EndDateTime = ?");
+    updateValues.push(endDateTime);
+
+    // RsvpLimit
+    if (rsvpLimit !== undefined) {
+      updateFields.push("RsvpLimit = ?");
+      updateValues.push(rsvpLimit || null);
+    }
+
+    // Only update the Image field if a new file is uploaded
+    if (req.file) {
+      const imagePath = `/uploads/${req.file.filename}`;
+      updateFields.push("Image = ?");
+      updateValues.push(imagePath);
+      console.log('Will update image to:', imagePath);
+    } else {
+      console.log('No new image - keeping existing image');
+    }
+
+    // Add eventId to the end of values array
+    updateValues.push(eventId);
+
+    // Build and execute the dynamic update query
+    const query = `UPDATE events SET ${updateFields.join(", ")} WHERE EventID = ?`;
+    
+    console.log('Update query:', query);
+    console.log('Update values:', updateValues);
+
+    await pool.query(query, updateValues);
 
     // Update categories
     await pool.query('DELETE FROM event_categories WHERE EventID = ?', [eventId]);
@@ -380,14 +416,19 @@ const updateEvent = async (req, res) => {
       [eventId]
     );
 
-    res.json({ 
-    success: true, 
-    message: 'Event updated successfully', 
-    event: {
+    // Create full URL for the image
+    const eventWithImage = {
       ...updatedEvent[0],
-    Image: imagePath ? `${req.protocol}://${req.get('host')}${imagePath}` : (updatedEvent[0].Image ? `${req.protocol}://${req.get('host')}${updatedEvent[0].Image}` : null)
-  }
-});
+      Image: updatedEvent[0].Image ? 
+        `${req.protocol}://${req.get('host')}${updatedEvent[0].Image}` : 
+        null
+    };
+
+    res.json({ 
+      success: true, 
+      message: 'Event updated successfully', 
+      event: eventWithImage
+    });
 
   } catch (error) {
     console.error('Update event error:', error);
