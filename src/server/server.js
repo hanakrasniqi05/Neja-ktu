@@ -14,7 +14,8 @@ const pool = require('./database');
 const adminRoutes = require('./routes/adminRoutes');
 const rsvpRoutes = require ('./routes/rsvpRoutes');
 const companyEventRoutes = require("./routes/companyEventRoutes");
-
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swagger");
 const app = express();
 
 // Kontrolli i folderit 'uploads'
@@ -23,6 +24,7 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
   console.log("Folder 'uploads' u krijua automatikisht.");
 }
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Middleware për të lexuar JSON në body
 app.use(cors());

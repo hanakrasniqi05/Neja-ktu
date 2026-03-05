@@ -19,7 +19,47 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+/**
+ * @swagger
+ * tags:
+ *   name: Companies
+ *   description: Company management
+ */
 
+/**
+ * @swagger
+ * /api/companies/register:
+ *   post:
+ *     summary: Register a company
+ *     tags: [Companies]
+ *     responses:
+ *       201:
+ *         description: Company registered
+ */
+
+/**
+ * @swagger
+ * /api/companies/top:
+ *   get:
+ *     summary: Get top companies
+ *     tags: [Companies]
+ *     responses:
+ *       200:
+ *         description: Top companies
+ */
+
+/**
+ * @swagger
+ * /api/companies/me:
+ *   get:
+ *     summary: Get company profile
+ *     tags: [Companies]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Company profile
+ */
 // Public routes
 router.post('/register', upload.single('logo_path'), registerCompany);
 router.get('/top', getTopCompanies);

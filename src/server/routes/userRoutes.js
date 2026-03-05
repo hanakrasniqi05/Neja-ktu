@@ -23,6 +23,56 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: User management
+ */
+
+/**
+ * @swagger
+ * /api/users/profile:
+ *   get:
+ *     summary: Get logged in user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile returned
+ */
+/**
+ * 
+ * @swagger
+ * /api/users/profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ */
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   delete:
+ *     summary: Admin deletes a user
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: User deleted
+ */
 
 // PUT route for updating user
 router.put('/me', protect, upload.single('profilePic'), updateMe);

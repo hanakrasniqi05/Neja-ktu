@@ -12,7 +12,39 @@ const {
   deleteRSVP,
   getRSVPsByUser
 } = require('../controllers/rsvpController');
+/**
+ * @swagger
+ * tags:
+ *   name: RSVP
+ *   description: RSVP management
+ */
 
+/**
+ * @swagger
+ * /api/rsvps:
+ *   post:
+ *     summary: Create RSVP
+ *     tags: [RSVP]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: RSVP created
+ */
+
+/**
+ * @swagger
+ * /api/rsvps/event/{eventId}:
+ *   get:
+ *     summary: Get RSVPs for event
+ *     tags: [RSVP]
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *     responses:
+ *       200:
+ *         description: RSVP list
+ */
 // Add 
 router.post('/', protect, requireAnyRole('user'), createRSVP);
 
